@@ -100,7 +100,6 @@ body {
     background: var(--bg);
     color: var(--text-primary);
     min-height: 100vh;
-    line-height: 1.5;
 }
 
 .container {
@@ -185,7 +184,7 @@ h1 {
 textarea {
     width: 100%;
     background: var(--bg-tertiary);
-    border: 2px solid transparent;
+    border: 1px solid transparent;
     border-radius: 16px;
     padding: 1.25rem;
     font-size: 1rem;
@@ -209,7 +208,7 @@ textarea::placeholder {
 .filename-input {
     width: 100%;
     background: var(--bg-tertiary);
-    border: 2px solid transparent;
+    border: 1px solid transparent;
     border-radius: 16px;
     padding: 0.75rem 1.25rem;
     font-size: 1rem;
@@ -366,7 +365,6 @@ input[type="file"] {
 
 .file-upload-form {
     text-align: center;
-    margin-bottom: 1.5rem;
 }
 
 .drag-over {
@@ -808,7 +806,6 @@ input[type="file"] {
 .modal-content textarea {
     width: 100%;
     padding: 8px;
-    margin-bottom: 15px;
     background-color: var(--bg-tertiary);
     color: var(--text-primary);
     border-radius: 8px;
