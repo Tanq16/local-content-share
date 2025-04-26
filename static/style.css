@@ -1,7 +1,7 @@
 :root {
     /* Color palette */
     --purple-primary: #7C3AED;
-    --purple-light: #DDD6FE;
+    --purple-light: #e2deed;
     --pink-secondary: #EC4899;
     --blue-accent: #4682B4;
     --blue-link: #a2c1f4;
@@ -17,10 +17,10 @@
     /* Neutrals - Dark Mode */
     --dark-bg: #111827;
     --dark-card: #1F2937;
-    --dark-hover: #374151;
+    --dark-hover: #303948;
     --dark-text: #E5E7EB;
     --dark-text-secondary: #9CA3AF;
-    --dark-border: #374151;
+    --dark-border: #303948;
 
     /* Semantic Variables - Light Mode Default */
     --primary: var(--purple-primary);
@@ -162,10 +162,10 @@ h1 {
 .compose-card {
     background: var(--bg-secondary);
     border-radius: 24px;
-    padding: 1.5rem;
+    padding: 1rem;
     box-shadow: 0 4px 20px rgba(124, 58, 237, 0.05);
     position: relative;
-    border: 1px solid var(--border-primary);
+    /* border: 1px solid var(--border-primary); */
     width: 100%;
     max-width: 1000px;
 }
@@ -472,7 +472,7 @@ input[type="file"] {
     line-height: 1.5;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     color: var(--text-primary);
-    border: 1px solid var(--border-primary);
+    /* border: 1px solid var(--border-primary); */
     box-shadow: 0 4px 20px rgba(124, 58, 237, 0.05);
 }
 
@@ -534,12 +534,12 @@ input[type="file"] {
     gap: 5px;
     background-color: var(--bg-secondary);
     padding: 10px;
-    border-radius: 5px;
+    border-radius: 12px;
     justify-content: center;
     overflow-x: auto;
     white-space: nowrap;
     margin-bottom: 10px;
-    border: 1px solid var(--border-primary);
+    /* border: 1px solid var(--border-primary); */
 }
 
 .editor-toolbar button {
@@ -587,7 +587,7 @@ input[type="file"] {
     padding: 15px;
     background-color: var(--bg-secondary);
     color: var(--text-primary);
-    border: 1px solid var(--border-primary);
+    /* border: 1px solid var(--border-primary); */
     border-radius: 12px;
     resize: none;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
@@ -602,7 +602,7 @@ input[type="file"] {
     display: none; /* Initially hidden */
     flex: 1;
     padding: 15px;
-    border: 1px solid var(--border-primary);
+    /* border: 1px solid var(--border-primary); */
     border-radius: 12px;
     background-color: var(--bg-secondary);
     overflow-y: auto;
@@ -752,7 +752,7 @@ input[type="file"] {
     padding: 1em;
     overflow-x: auto;
     margin: 1.5em 0;
-    border: 1px solid var(--border-primary);
+    /* border: 1px solid var(--border-primary); */
 }
 
 .markdown-body code {
@@ -824,7 +824,7 @@ input[type="file"] {
     padding: 8px;
     margin-bottom: 15px;
     background-color: var(--bg-tertiary);
-    border: 1px solid var(--border-primary);
+    /* border: 1px solid var(--border-primary); */
     color: var(--text-primary);
     border-radius: 8px;
 }
