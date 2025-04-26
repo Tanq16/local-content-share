@@ -61,7 +61,6 @@
 /* Dark Mode Override */
 @media (prefers-color-scheme: dark) {
     :root {
-        /* Override semantic variables for dark mode */
         --bg: var(--dark-bg);
         --white: var(--dark-card);
         --gray-100: var(--dark-hover);
@@ -70,22 +69,18 @@
         --gray-500: var(--dark-text-secondary);
         --gray-700: var(--dark-text);
 
-        /* Component backgrounds */
         --bg-primary: var(--dark-bg);
         --bg-secondary: var(--dark-card);
         --bg-tertiary: var(--dark-hover);
         
-        /* Text colors */
         --text-primary: var(--dark-text);
         --text-secondary: var(--dark-text-secondary);
         --text-muted: var(--dark-text-secondary);
         --text-link: var(--primary-light);
         
-        /* Borders */
         --border-primary: var(--dark-border);
         --border-secondary: var(--dark-text-secondary);
         
-        /* Interactive elements */
         --button-hover: var(--dark-hover);
         --scrollbar-thumb: var(--dark-text-secondary);
         --code-bg: rgba(0, 0, 0, 0.2);
@@ -165,14 +160,17 @@ h1 {
     padding: 1rem;
     box-shadow: 0 4px 20px rgba(124, 58, 237, 0.05);
     position: relative;
-    /* border: 1px solid var(--border-primary); */
     width: 100%;
     max-width: 1000px;
 }
 
 @media (prefers-color-scheme: dark) {
-    .compose-card {
+    .compose-card, .content-view {
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+    
+    .entry-card:hover {
+        box-shadow: 0 8px 24px rgba(90, 90, 90, 0.1);
     }
 }
 
@@ -253,19 +251,18 @@ textarea::placeholder {
 }
 
 .btn-primary {
-    background: var(--primary);
+    background: var(--text-secondary);
     color: var(--white);
     box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
 }
 
 .btn-secondary {
     background: var(--bg-secondary);
-    color: var(--primary);
-    border: 2px solid var(--primary-light);
+    color: var(--test-secondary);
 }
 
 .btn-primary:hover {
-    background: #6D28D9; /* Darker purple for hover */
+    background: #6D28D9;
     box-shadow: 0 6px 16px rgba(124, 58, 237, 0.3);
 }
 
@@ -278,7 +275,7 @@ textarea::placeholder {
     align-items: center;
     gap: 0.5rem;
     padding: 0.75rem 1.5rem;
-    background: transparent;
+    background: var(--bg-secondary);;
     border: 0.5px solid var(--primary-light);
     color: var(--primary);
     border-radius: 12px;
@@ -287,6 +284,12 @@ textarea::placeholder {
     font-size: 0.95rem;
     min-width: 150px;
     justify-content: center;
+}
+
+@media (prefers-color-scheme: dark) {
+    .upload-btn {
+        background: transparent;
+    }
 }
 
 .upload-btn i {
@@ -322,7 +325,7 @@ textarea::placeholder {
 }
 
 .back-btn:hover {
-    background-color: #6D28D9; /* Darker purple for hover */
+    background-color: #6D28D9;
 }
 
 .action-button {
@@ -344,7 +347,7 @@ textarea::placeholder {
 }
 
 .primary-button:hover {
-    background: #6D28D9; /* Darker purple for hover */
+    background: #6D28D9;
 }
 
 .secondary-button {
@@ -412,12 +415,6 @@ input[type="file"] {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
-@media (prefers-color-scheme: dark) {
-    .entry-card:hover {
-        box-shadow: 0 8px 24px rgba(90, 90, 90, 0.1);
-    }
-}
-
 .entry-content {
     font-size: 0.95rem;
     color: var(--text-secondary);
@@ -472,14 +469,7 @@ input[type="file"] {
     line-height: 1.5;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     color: var(--text-primary);
-    /* border: 1px solid var(--border-primary); */
     box-shadow: 0 4px 20px rgba(124, 58, 237, 0.05);
-}
-
-@media (prefers-color-scheme: dark) {
-    .content-view {
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    }
 }
 
 /* Scratchpad Styles (Both MD and Rich Text) */
@@ -539,7 +529,6 @@ input[type="file"] {
     overflow-x: auto;
     white-space: nowrap;
     margin-bottom: 10px;
-    /* border: 1px solid var(--border-primary); */
 }
 
 .editor-toolbar button {
@@ -587,7 +576,6 @@ input[type="file"] {
     padding: 15px;
     background-color: var(--bg-secondary);
     color: var(--text-primary);
-    /* border: 1px solid var(--border-primary); */
     border-radius: 12px;
     resize: none;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
@@ -599,10 +587,9 @@ input[type="file"] {
 
 /* Markdown Preview */
 #markdown-preview {
-    display: none; /* Initially hidden */
+    display: none;
     flex: 1;
     padding: 15px;
-    /* border: 1px solid var(--border-primary); */
     border-radius: 12px;
     background-color: var(--bg-secondary);
     overflow-y: auto;
@@ -752,7 +739,6 @@ input[type="file"] {
     padding: 1em;
     overflow-x: auto;
     margin: 1.5em 0;
-    /* border: 1px solid var(--border-primary); */
 }
 
 .markdown-body code {
@@ -824,7 +810,6 @@ input[type="file"] {
     padding: 8px;
     margin-bottom: 15px;
     background-color: var(--bg-tertiary);
-    /* border: 1px solid var(--border-primary); */
     color: var(--text-primary);
     border-radius: 8px;
 }
