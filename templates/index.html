@@ -64,7 +64,7 @@
                     <!-- File Upload Form -->
                     <form action="/submit" method="POST" enctype="multipart/form-data" id="fileForm" class="file-upload-form" style="margin-bottom: 0;">
                         <input type="hidden" name="type" value="file">
-                        <label class="btn-icon upload-btn" title="Upload files">
+                        <label class="btn-icon" title="Upload files">
                             <i class="fas fa-cloud-upload-alt"></i>
                             <span class="upload-text">Upload</span>
                             <input type="file" name="multifile" multiple onChange="handleFileSelect(event)">
@@ -72,7 +72,7 @@
                     </form>
                     
                     <!-- Scratchpad Button -->
-                    <a href="/md" class="btn-icon upload-btn" title="Open Scratchpad" style="text-decoration: none; display: inline-flex;">
+                    <a href="/md" class="btn-icon" title="Open Scratchpad" style="text-decoration: none; display: inline-flex;">
                         <i class="fas fa-edit"></i>
                         <span class="upload-text">Scratchpad</span>
                     </a>
@@ -95,7 +95,7 @@
                         <input type="text" name="filename" placeholder="Name (defaults to date string)" class="filename-input">
                         <textarea name="content" placeholder="Add text snippets to store or share, or drag and drop files here!" rows="4"></textarea>
                         <div class="actions-wrapper">
-                            <button type="submit" class="btn-icon btn-primary" title="Send">
+                            <button type="submit" class="btn-icon-small" title="Send">
                                 <i class="fas fa-paper-plane"></i>
                             </button>
                         </div>
@@ -113,16 +113,16 @@
                             <div class="entry-card">
                                 <div class="entry-content">{{.Filename}}</div>
                                 <div class="entry-actions">
-                                    <button onclick="showRenamePrompt('{{.ID}}')" class="btn-icon" title="Rename">
+                                    <button onclick="showRenamePrompt('{{.ID}}')" class="btn-icon-small" title="Rename">
                                         <i class="fas fa-i-cursor"></i>
                                     </button>
-                                    <button onclick="showEditForm('{{.ID}}')" class="btn-icon" title="Edit">
+                                    <button onclick="showEditForm('{{.ID}}')" class="btn-icon-small" title="Edit">
                                         <i class="fas fa-pen"></i>
                                     </button>
-                                    <a href="/show/{{.ID}}" class="btn-icon" title="Show">
+                                    <a href="/show/{{.ID}}" class="btn-icon-small" title="Show">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <a href="/delete/{{.ID}}" class="btn-icon" title="Delete">
+                                    <a href="/delete/{{.ID}}" class="btn-icon-small" title="Delete">
                                         <i class="fas fa-trash"></i>
                                     </a>
                                 </div>
@@ -141,16 +141,16 @@
                             <div class="entry-card">
                                 <div class="entry-content">{{.Filename}}</div>
                                 <div class="entry-actions">
-                                    <button onclick="showRenamePrompt('{{.ID}}')" class="btn-icon" title="Rename">
+                                    <button onclick="showRenamePrompt('{{.ID}}')" class="btn-icon-small" title="Rename">
                                         <i class="fas fa-i-cursor"></i>
                                     </button>
-                                    <a href="/download/{{.ID}}" class="btn-icon" title="Download">
+                                    <a href="/download/{{.ID}}" class="btn-icon-small" title="Download">
                                         <i class="fas fa-download"></i>
                                     </a>
-                                    <a href="/view/{{.ID}}" class="btn-icon" title="View">
+                                    <a href="/view/{{.ID}}" class="btn-icon-small" title="View">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <a href="/delete/{{.ID}}" class="btn-icon" title="Delete">
+                                    <a href="/delete/{{.ID}}" class="btn-icon-small" title="Delete">
                                         <i class="fas fa-trash"></i>
                                     </a>
                                 </div>
@@ -283,7 +283,7 @@
                         <button type="button" onclick="window.location.reload()" class="btn-icon btn-secondary" title="Cancel">
                             <i class="fas fa-times"></i>
                         </button>
-                        <button type="submit" class="btn-icon btn-primary" title="Save">
+                        <button type="submit" class="btn-icon-small" title="Save">
                             <i class="fas fa-check"></i>
                         </button>
                     </div>

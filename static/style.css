@@ -237,16 +237,57 @@ textarea::placeholder {
     gap: 1rem;
 }
 
-.btn-icon {
+.btn-icon-small {
+    padding: 8px 16px;
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    font-size: 0.95rem;
     width: 32px;
     height: 32px;
-    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 0.5rem;
     border: none;
+}
+
+.btn-icon-small {
+    background: var(--primary-light);
+    color: var(--primary);
+}
+
+.btn-icon {
+    padding: 8px 16px;
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border-radius: 12px;
+    transition: all 0.2s ease;
     cursor: pointer;
-    transition: all 0.3s ease;
+    font-size: 0.95rem;
+    min-width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border: none;
+}
+
+.btn-icon:hover {
+    background: var(--primary-light);
+    color: var(--primary);
+}
+
+.upload-text {
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.btn-icon:hover .upload-text {
+    color: var(--primary);
 }
 
 .btn-primary {
@@ -267,46 +308,6 @@ textarea::placeholder {
 
 .btn-secondary:hover {
     background: var(--bg-tertiary);
-}
-
-.upload-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1.5rem;
-    background: var(--bg-secondary);;
-    border: 0.5px solid var(--primary-light);
-    color: var(--primary);
-    border-radius: 12px;
-    transition: all 0.2s ease;
-    cursor: pointer;
-    font-size: 0.95rem;
-    min-width: 150px;
-    justify-content: center;
-}
-
-@media (prefers-color-scheme: dark) {
-    .upload-btn {
-        background: transparent;
-    }
-}
-
-.upload-btn i {
-    font-size: 1.2rem;
-}
-
-.upload-text {
-    font-weight: 500;
-    color: var(--primary);
-}
-
-.upload-btn:hover {
-    background: var(--primary-light);
-    color: var(--primary);
-}
-
-.upload-btn:hover .upload-text {
-    color: var(--primary);
 }
 
 .back-btn {
@@ -487,7 +488,7 @@ input[type="file"] {
     align-items: center;
     padding-bottom: 15px;
     margin-bottom: 20px;
-    gap: 10px;
+    gap: 0.75rem;
 }
 
 .app-title {
