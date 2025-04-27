@@ -50,7 +50,7 @@ type Entry struct {
 	Filename string
 }
 
-var listenAddress = flag.String("listen", "localhost:8080", "host:port in which the server will listen")
+var listenAddress = flag.String("listen", ":8080", "host:port in which the server will listen")
 
 func generateUniqueFilename(baseDir, baseName string) string {
 	// Sanitize: allow only letters, numbers, hyphen, underscore, and space
