@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"flag"
 	"fmt"
 	"html/template"
 	"io"
@@ -49,6 +50,8 @@ type Entry struct {
 	Filename string
 }
 
+var port = flag.String("port", "8080", "Port in which the server will listen")
+
 func generateUniqueFilename(baseDir, baseName string) string {
 	// Sanitize: allow only letters, numbers, hyphen, underscore, and space
 	reg := regexp.MustCompile(`[^a-zA-Z0-9\.\-_\s]`)
@@ -69,6 +72,8 @@ func generateUniqueFilename(baseDir, baseName string) string {
 }
 
 func main() {
+	flag.Parse()
+
 	if err := os.MkdirAll(filepath.Join("data", "files"), 0755); err != nil {
 		log.Fatal(err)
 	}
@@ -415,5 +420,5 @@ func main() {
 	})
 
 	// Start server
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":" + *port, nil))
 }
