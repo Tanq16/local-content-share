@@ -3,6 +3,7 @@ package main
 import (
 	"embed"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"html/template"
 	"io"
@@ -140,6 +141,8 @@ func (t *ExpirationTracker) CleanupExpired() []string {
 	return expiredFiles
 }
 
+var listenAddress = flag.String("listen", ":8080", "host:port in which the server will listen")
+
 // Placeholder content for notepad files
 const mdPlaceholder = `# Welcome to Markdown Notepad
 
@@ -182,6 +185,7 @@ func generateUniqueFilename(baseDir, baseName string) string {
 }
 
 func main() {
+	flag.Parse()
 	if err := os.MkdirAll(filepath.Join("data", "files"), 0755); err != nil {
 		log.Fatal(err)
 	}
@@ -622,7 +626,7 @@ func main() {
 	})
 
 	// Start server
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(*listenAddress, nil))
 }
 
 // Helper function to create notepad files if they don't exist
