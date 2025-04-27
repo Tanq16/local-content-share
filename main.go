@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
@@ -12,6 +13,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -47,6 +49,95 @@ type Entry struct {
 	Content  string
 	Type     string
 	Filename string
+}
+
+type ExpirationTracker struct {
+	Expirations map[string]time.Time `json:"expirations"`
+	mu          sync.Mutex           // mutex for thread safety
+}
+
+var expirationTracker *ExpirationTracker
+
+func initExpirationTracker() *ExpirationTracker {
+	tracker := &ExpirationTracker{
+		Expirations: make(map[string]time.Time),
+	}
+	// Load existing expirations from file
+	expirationFile := filepath.Join("data", "expirations.json")
+	if _, err := os.Stat(expirationFile); err == nil {
+		data, err := os.ReadFile(expirationFile)
+		if err == nil {
+			var storedTracker ExpirationTracker
+			if err := json.Unmarshal(data, &storedTracker); err == nil {
+				tracker.Expirations = storedTracker.Expirations
+			}
+		}
+	}
+	return tracker
+}
+
+func (t *ExpirationTracker) SetExpiration(fileID, expiryOption string) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if expiryOption == "Never" {
+		delete(t.Expirations, fileID)
+	} else {
+		var duration time.Duration
+		switch expiryOption {
+		case "1 hour":
+			duration = 1 * time.Hour
+		case "4 hours":
+			duration = 4 * time.Hour
+		case "1 day":
+			duration = 24 * time.Hour
+		default:
+			// Default to no expiration
+			delete(t.Expirations, fileID)
+			return
+		}
+		// Set the expiration time
+		t.Expirations[fileID] = time.Now().Add(duration)
+	}
+	t.saveToFile()
+}
+
+func (t *ExpirationTracker) saveToFile() {
+	data, err := json.MarshalIndent(t, "", "  ")
+	if err != nil {
+		log.Printf("Error marshaling expirations: %v", err)
+		return
+	}
+	expirationFile := filepath.Join("data", "expirations.json")
+	if err := os.WriteFile(expirationFile, data, 0644); err != nil {
+		log.Printf("Error saving expirations: %v", err)
+	}
+}
+
+func (t *ExpirationTracker) CleanupExpired() []string {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	now := time.Now()
+	var expiredFiles []string
+	// Find expired files
+	for fileID, expiryTime := range t.Expirations {
+		if now.After(expiryTime) {
+			expiredFiles = append(expiredFiles, fileID)
+		}
+	}
+	// Delete expired files
+	for _, fileID := range expiredFiles {
+		err := os.Remove(filepath.Join("data", fileID))
+		if err != nil && !os.IsNotExist(err) {
+			log.Printf("Error removing expired file %s: %v", fileID, err)
+		} else {
+			log.Printf("Removed expired file: %s", fileID)
+		}
+		delete(t.Expirations, fileID)
+	}
+	if len(expiredFiles) > 0 {
+		t.saveToFile()
+	}
+	return expiredFiles
 }
 
 // Placeholder content for notepad files
@@ -107,9 +198,24 @@ func main() {
 	createNotepadFileIfNotExists("md.file", mdPlaceholder)
 	createNotepadFileIfNotExists("rtext.file", rtextPlaceholder)
 
+	// Initialize the expiration tracker
+	expirationTracker = initExpirationTracker()
+
+	// Goroutine to periodically expire files
+	go func() {
+		ticker := time.NewTicker(30 * time.Minute)
+		defer ticker.Stop()
+		for range ticker.C {
+			expirationTracker.CleanupExpired()
+		}
+	}()
+
 	tmpl := template.Must(template.ParseFS(content, "templates/*.html"))
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		// Clean up expired files on page load
+		expirationTracker.CleanupExpired()
+
 		entries := []Entry{}
 		textFiles, _ := os.ReadDir(filepath.Join("data", "text"))
 		for _, file := range textFiles {
@@ -162,37 +268,31 @@ func main() {
 	http.HandleFunc("/style.css", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/css")
 		w.Write(styleCSS)
-		// log.Println("Served style.css")
 	})
 
 	http.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "image/x-icon")
 		w.Write(faviconICO)
-		// log.Println("Served favicon.ico")
 	})
 
 	http.HandleFunc("/manifest.json", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(manifestJSON)
-		// log.Println("Served manifest.json")
 	})
 
 	http.HandleFunc("/sw.js", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/javascript")
 		w.Write(serviceWorkerJS)
-		// log.Println("Served sw.js")
 	})
 
 	http.HandleFunc("/icon-192.png", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "image/png")
 		w.Write(icon192PNG)
-		// log.Println("Served icon-192.png")
 	})
 
 	http.HandleFunc("/icon-512.png", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "image/png")
 		w.Write(icon512PNG)
-		// log.Println("Served icon-512.png")
 	})
 
 	// API endpoint to load notepad content
@@ -242,6 +342,11 @@ func main() {
 			return
 		}
 		entryType := r.FormValue("type")
+		expiryOption := r.FormValue("expiry")
+		if expiryOption == "" {
+			expiryOption = "Never" // Default to no expiration
+		}
+
 		switch entryType {
 		case "text":
 			content := r.FormValue("content")
@@ -260,7 +365,12 @@ func main() {
 				http.Error(w, err.Error(), 500)
 				return
 			}
-			log.Printf("Saved text snippet to %s\n", filename)
+			// Set expiration if needed
+			if expiryOption != "Never" {
+				fileID := filepath.Join("text", filename)
+				expirationTracker.SetExpiration(fileID, expiryOption)
+			}
+			log.Printf("Saved text snippet to %s with expiry %s\n", filename, expiryOption)
 		case "file":
 			if err := r.ParseMultipartForm(2 << 28); err != nil {
 				http.Error(w, err.Error(), 500)
@@ -289,7 +399,12 @@ func main() {
 					if _, err := io.Copy(f, file); err != nil {
 						return fmt.Errorf("failed to save file: %v", err)
 					}
-					log.Printf("Saved file %s\n", fileName)
+					// Set expiration if needed
+					if expiryOption != "Never" {
+						fileID := filepath.Join("files", fileName)
+						expirationTracker.SetExpiration(fileID, expiryOption)
+					}
+					log.Printf("Saved file %s with expiry %s\n", fileName, expiryOption)
 					return nil
 				}(); err != nil {
 					http.Error(w, err.Error(), 500)
@@ -313,10 +428,26 @@ func main() {
 		}
 		baseDir := filepath.Dir(filepath.Join("data", oldPath))
 		newName = generateUniqueFilename(baseDir, newName)
-		err := os.Rename(
-			filepath.Join("data", oldPath),
-			filepath.Join(baseDir, newName),
-		)
+
+		// Get the new full path
+		newPath := filepath.Join(baseDir, newName)
+		oldFullPath := filepath.Join("data", oldPath)
+
+		// Check if there's an expiration for this file
+		expirationTracker.mu.Lock()
+		expiryTime, hasExpiry := expirationTracker.Expirations[oldPath]
+		if hasExpiry {
+			// Remove old entry and add new one
+			delete(expirationTracker.Expirations, oldPath)
+			relNewPath := strings.TrimPrefix(newPath, "data/")
+			relNewPath = strings.TrimPrefix(relNewPath, "/")
+			expirationTracker.Expirations[relNewPath] = expiryTime
+			expirationTracker.saveToFile()
+		}
+		expirationTracker.mu.Unlock()
+
+		// Rename the file
+		err := os.Rename(oldFullPath, newPath)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -458,6 +589,10 @@ func main() {
 	http.HandleFunc("/delete/", func(w http.ResponseWriter, r *http.Request) {
 		filename := strings.TrimPrefix(r.URL.Path, "/delete/")
 		os.Remove(filepath.Join("data", filename))
+		expirationTracker.mu.Lock()
+		delete(expirationTracker.Expirations, filename)
+		expirationTracker.saveToFile()
+		expirationTracker.mu.Unlock()
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		log.Printf("Deleted %s\n", filename)
 	})

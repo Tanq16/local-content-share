@@ -104,6 +104,7 @@
                 <div class="compose-card" id="dropZone" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragleave="handleDragLeave(event)" ondragenter="handleDragEnter(event)">
                     <form action="/submit" method="POST" enctype="multipart/form-data" id="textForm">
                         <input type="hidden" name="type" value="text">
+                        <input type="hidden" name="expiry" id="expiryValue" value="Never">
                         <input type="text" name="filename" placeholder="Name (defaults to date string)" class="filename-input">
                         <textarea name="content" placeholder="Add text snippets to store or share, or drag and drop files here!" rows="4" id="contentTextarea" oninput="toggleButtons()"></textarea>
                     </form>
@@ -192,6 +193,7 @@
             if (files.length > 0) {
                 const formData = new FormData();
                 formData.append('type', 'file');
+                formData.append('expiry', document.getElementById('expiryValue').value);
                 for (let i = 0; i < files.length; i++) {
                     formData.append('multifile', files[i]);
                 }
@@ -234,6 +236,7 @@
             if (files.length > 0) {
                 const formData = new FormData();
                 formData.append('type', 'file');
+                formData.append('expiry', document.getElementById('expiryValue').value);
                 for (let i = 0; i < files.length; i++) {
                     formData.append('multifile', files[i]);
                 }
@@ -346,7 +349,9 @@
             const currentText = document.getElementById('expiryText').innerText;
             const currentIndex = expiryValues.indexOf(currentText);
             const nextIndex = (currentIndex + 1) % expiryValues.length;
-            document.getElementById('expiryText').innerText = expiryValues[nextIndex];
+            const newValue = expiryValues[nextIndex];
+            document.getElementById('expiryText').innerText = newValue;
+            document.getElementById('expiryValue').value = newValue;
         }
         
         // Initialize the button states when the page loads

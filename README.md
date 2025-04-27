@@ -4,12 +4,12 @@
 
   <a href="https://github.com/tanq16/local-content-share/actions/workflows/binary-build.yml"><img alt="Build Workflow" src="https://github.com/tanq16/local-content-share/actions/workflows/binary-build.yml/badge.svg"></a>&nbsp;<a href="https://github.com/tanq16/local-content-share/actions/workflows/docker-publish.yml"><img alt="Container Workflow" src="https://github.com/tanq16/local-content-share/actions/workflows/docker-publish.yml/badge.svg"></a><br>
   <a href="https://github.com/Tanq16/local-content-share/releases"><img alt="GitHub Release" src="https://img.shields.io/github/v/release/tanq16/local-content-share"></a>&nbsp;<a href="https://hub.docker.com/r/tanq16/local-content-share"><img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/tanq16/local-content-share"></a><br><br>
-  <a href="#screenshots">Screenshots</a> &bull; <a href="#installation-and-usage">Install & Use</a> &bull; <a href="#tips-and-notes">Tips & Notes</a>
+  <a href="#screenshots">Screenshots</a> &bull; <a href="#installation-and-usage">Install & Use</a> &bull; <a href="#tips-and-notes">Tips & Notes</a> &bull; <a href="#acknowledgements">Acknowledgements</a>
 </div>
 
 ---
 
-A simple self-hosted app for sharing text snippets and files within your local network across any device and a notepad. Think of this as a simple and elegant alternative to airdrop, local-pastebin and notepad. The primary features are:
+A simple self-hosted app for sharing text snippets and files within your local network across any device. It also includes and a notepad to throw rough notes in. Think of this as a simple and elegant alternative to airdrop, local-pastebin and a scratchpad. The primary features are:
 
 - Make plain text snippets available to view/share on any device in the local network
 - Upload files and make them available to view/download on any device in the local network
@@ -17,6 +17,7 @@ A simple self-hosted app for sharing text snippets and files within your local n
 - Rename text snippets and files uploaded to easily find them in the UI
 - Edit text snippets to modify their content as needed
 - Multi-file drag-n-drop (drop into the text area) support for uploading files
+- Configurable expiration per file or snippet for 1 hour, 4 hours, or 1 day
 
 From a technology perspective, the app boasts the following:
 
@@ -34,10 +35,24 @@ From a technology perspective, the app boasts the following:
 
 | | Desktop View | Mobile View |
 | --- | --- | --- |
-| Light | <img src="assets/desktop-light.png" alt="Desktop Light Mode"> | <img src="assets/mobile-light.png" alt="Mobile Light Mode"> |
-| Dark | <img src="assets/desktop-dark.png" alt="Desktop Dark Mode"> | <img src="assets/mobile-dark.png" alt="Mobile Dark Mode"> |
+| Light | <img src="assets/dlight.png" alt="Light"> | <img src="assets/mlight.png" alt="Light"> |
+| Dark | <img src="assets/ddark.png" alt="Dark"> | <img src="assets/mdark.png" alt="Dark"> |
 
-Click [here](./assets/screencast.webm) to see a screencast of the app in action!
+<details>
+<summary>Expand for more screenshots</summary>
+
+| Desktop View | Mobile View |
+| --- | --- |
+| <img src="assets/dmdlight.png"> | <img src="assets/mmdlight.png"> |
+| <img src="assets/dmddark.png"> | <img src="assets/mmddark.png"> |
+| <img src="assets/dmdrlight.png"> | <img src="assets/mmdrlight.png"> |
+| <img src="assets/dmdrdark.png"> | <img src="assets/mmdrdark.png"> |
+| <img src="assets/drtextlight.png"> | <img src="assets/mrtextlight.png"> |
+| <img src="assets/drtextdark.png"> | <img src="assets/mrtextdark.png"> |
+| <img src="assets/dsnippetlight.png"> | <img src="assets/msnippetlight.png"> |
+| <img src="assets/dsnippetdark.png"> | <img src="assets/msnippetdark.png"> |
+
+</details>
 
 ## Installation and Usage
 
@@ -65,7 +80,7 @@ services:
     image: tanq16/local-content-share:main
     container_name: local-content-share
     volumes:
-      - /home/tanq/lcshare:/app/data
+      - /home/tanq/lcshare:/app/data # Change as needed
     ports:
       - 8080:8080
 ```
@@ -95,28 +110,38 @@ go build .
 ## Tips and Notes
 
 - To share text content:
-   - Type or paste your text in the text area
-   - (OPTIONAL) type the name of the snippet (also the name of the file in the backend)
-   - Click the send button (looks like the telegram arrow)
-   - It will set a date-string-based file name if no custom name is specified
+   - Type or paste your text in the text area (the upload button will change to a submit button)
+   - (OPTIONAL) type the name of the snippet (otherwise it will name it as a time string)
+   - Click the submit button (looks like the telegram arrow) to upload the snippet
 - To rename files or text snippets:
    - Click the cursor (i-beam) icon and provide the new name
    - It will automatically prepend 4 random digits if the name isn't unique
 - To edit existing snippets:
    - Click the pen icon and it will populate the expandable text area with the content
-   - Write the new content and click accept or deny (check or cross)
+   - Write the new content and click accept or deny (check or cross) in the same text area
    - On accepting, it will edit the content; on denying, it will refresh the page
 - To share files:
    - Click the upload button and select your file
    - OR drag and drop your file (even multiple files) to the text area
    - It will automatically append 4 random digits if filename isn't unique
 - To view content, click the eye icon:
-   - For text content, it shows raw text
-   - For files, it shows raw text, images, PDFs, etc. (basically whatever way browsers can show items)
+   - For text content, it shows the raw text, which can be copied with a button on top
+   - For files, it shows raw text, images, PDFs, etc. (basically whatever the browser will do)
 - To download files, click the download icon
 - To delete content, click the trash icon
-- The Notepad is only to write something quickly while leaving the tab open
-   - The markdown mode can be used to render things as HTML or print as a PDF
-   - There are some other features planned for improving the notepad functionality
+- To set expiration for a file or snippet
+   - Click the clock icon with the "Never" text (signifying no expiry) to cycle between times
+   - Set the cycling button to 1 hour, 4 hours, or 1 day before adding a snippet or file
+   - For a non-"Never" expiration, the file will automatically be removed after the specified period
+- The Notepad is for writing something quickly and getting back to it from any device
+   - It supports both markdown and richtext modes
+   - Content is automatically saved upon inactivity in the backend and will load as is on any device
 
-A quick note of the data structure: the application creates a `data` directory to store all uploaded files and text content (both in `files` and `text` subfolders respectively). Make sure the application has write permissions for the directory where it runs.
+A quick note of the data structure: the application creates a `data` directory to store all uploaded files, uploaded text snippets, notepad notes (in `files`, `text`, and `notepad` subfolders respectively). File expirations are saved in an `expiration.json` file in the data directory. Make sure the application has write permissions for the directory where it runs.
+
+## Acknowledgements
+
+The following people have contributed to the project:
+
+- [TheArktect](https://github.com/TheArktect) - Added CLI argument for listen address.
+- Several other users who created feature requests via GitHub issues.
