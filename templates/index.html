@@ -59,17 +59,23 @@
 
         <main>
             <section class="input-section">
-                <!-- File Upload and Scratchpad Buttons -->
+                <!-- File/Text Upload and Scratchpad Buttons -->
                 <div class="buttons-container" style="display: flex; justify-content: center; gap: 10px; margin-bottom: 15px;">
                     <!-- File Upload Form -->
                     <form action="/submit" method="POST" enctype="multipart/form-data" id="fileForm" class="file-upload-form" style="margin-bottom: 0;">
                         <input type="hidden" name="type" value="file">
-                        <label class="btn-icon" title="Upload files">
+                        <label class="btn-icon" title="Upload files" id="uploadButton">
                             <i class="fas fa-cloud-upload-alt"></i>
                             <span class="upload-text">Upload</span>
                             <input type="file" name="multifile" multiple onChange="handleFileSelect(event)">
                         </label>
                     </form>
+                    
+                    <!-- Text Submit Button (initially hidden) -->
+                    <button type="button" class="btn-icon" title="Submit text" id="submitTextButton" onclick="document.getElementById('textForm').submit();" style="display: none;">
+                        <i class="fas fa-paper-plane"></i>
+                        <span class="upload-text">Submit</span>
+                    </button>
                     
                     <!-- Scratchpad Button -->
                     <a href="/md" class="btn-icon" title="Open Scratchpad" style="text-decoration: none; display: inline-flex;">
@@ -93,12 +99,7 @@
                     <form action="/submit" method="POST" enctype="multipart/form-data" id="textForm">
                         <input type="hidden" name="type" value="text">
                         <input type="text" name="filename" placeholder="Name (defaults to date string)" class="filename-input">
-                        <textarea name="content" placeholder="Add text snippets to store or share, or drag and drop files here!" rows="4"></textarea>
-                        <div class="actions-wrapper">
-                            <button type="submit" class="btn-icon-small" title="Send">
-                                <i class="fas fa-paper-plane"></i>
-                            </button>
-                        </div>
+                        <textarea name="content" placeholder="Add text snippets to store or share, or drag and drop files here!" rows="4" id="contentTextarea" oninput="toggleButtons()"></textarea>
                     </form>
                 </div>
             </section>
@@ -316,6 +317,28 @@
         }
         // Refresh every 2 seconds
         setInterval(refreshContent, 2000);
+    </script>
+    <script>
+        function toggleButtons() {
+            const textareaContent = document.getElementById('contentTextarea').value;
+            const uploadButton = document.getElementById('uploadButton');
+            const submitTextButton = document.getElementById('submitTextButton');
+            
+            if (textareaContent.trim() !== '') {
+                // If textarea has content, hide upload button and show submit button
+                uploadButton.style.display = 'none';
+                submitTextButton.style.display = 'inline-flex';
+            } else {
+                // If textarea is empty, show upload button and hide submit button
+                uploadButton.style.display = 'inline-flex';
+                submitTextButton.style.display = 'none';
+            }
+        }
+        
+        // Initialize the button states when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleButtons();
+        });
     </script>
 </body>
 </html>

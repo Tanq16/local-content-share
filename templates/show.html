@@ -16,7 +16,7 @@
             <button class="btn-icon" onclick="window.location.href='/'">
                 <i class="fas fa-home"></i> Back
             </button>
-            <button class="btn-icon" onclick="copyContent()">
+            <button class="btn-icon" id="copyButton" onclick="copyContent()">
                 <i class="fas fa-copy"></i> Copy
             </button>
         </div>
@@ -53,7 +53,7 @@
                 document.body.removeChild(textarea);
             }
             function showCopiedFeedback() {
-                const button = document.querySelector('.secondary-button');
+                const button = document.getElementById('copyButton');
                 const originalHTML = button.innerHTML;
                 button.innerHTML = '<i class="fas fa-check"></i> Copied!';
                 setTimeout(() => {

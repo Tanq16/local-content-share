@@ -254,7 +254,7 @@ textarea::placeholder {
     border: none;
 }
 
-.btn-icon-small {
+.btn-icon-small:hover {
     background: var(--primary-light);
     color: var(--primary);
 }
@@ -290,20 +290,9 @@ textarea::placeholder {
     color: var(--primary);
 }
 
-.btn-primary {
-    background: var(--text-secondary);
-    color: var(--white);
-    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
-}
-
 .btn-secondary {
     background: var(--bg-secondary);
     color: var(--test-secondary);
-}
-
-.btn-primary:hover {
-    background: #6D28D9;
-    box-shadow: 0 6px 16px rgba(124, 58, 237, 0.3);
 }
 
 .btn-secondary:hover {
