@@ -15,7 +15,7 @@ let isReaderMode = false;
 
 // Initialize Application
 document.addEventListener('DOMContentLoaded', function() {
-  markdownEditor.value = '# Welcome to Markdown Scratchpad\n\nStart typing your markdown here...\n\n## Features\n\n- **Bold** and *italic* text\n- [Links](https://example.com)\n- Lists (ordered and unordered)\n- Code blocks\n- And more!\n\n```\nfunction example() {\n  console.log("Hello, Markdown!");\n}\n```';
+  markdownEditor.value = '# Welcome to Markdown Notepad\n\nStart typing your markdown here...\n\n## Features\n\n- **Bold** and *italic* text\n- [Links](https://example.com)\n- Lists (ordered and unordered)\n- Code blocks\n- And more!\n\n```\nfunction example() {\n  console.log("Hello, Markdown!");\n}\n```';
   updatePreview();
   setupEventListeners();
   saveState();
@@ -95,11 +95,6 @@ function updateFontSize() {
   codeElements.forEach(code => {
     code.style.fontSize = `${baseFontSize * 0.9}px`;
   });
-}
-
-function selectAllText() {
-  markdownEditor.select();
-  markdownEditor.focus();
 }
 
 // Toggle between reader and writer mode

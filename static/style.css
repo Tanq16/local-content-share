@@ -460,7 +460,7 @@ input[type="file"] {
     box-shadow: 0 4px 20px rgba(124, 58, 237, 0.05);
 }
 
-/* Scratchpad Styles (Both MD and Rich Text) */
+/* Notepad Styles (Both MD and Rich Text) */
 .note-container {
     display: flex;
     flex-direction: column;

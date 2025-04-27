@@ -59,8 +59,8 @@
 
         <main>
             <section class="input-section">
-                <!-- File/Text Upload and Scratchpad Buttons -->
-                <div class="buttons-container" style="display: flex; justify-content: center; gap: 10px; margin-bottom: 15px;">
+                <!-- Input Section Buttons -->
+                <div class="buttons-container">
                     <!-- File Upload Form -->
                     <form action="/submit" method="POST" enctype="multipart/form-data" id="fileForm" class="file-upload-form" style="margin-bottom: 0;">
                         <input type="hidden" name="type" value="file">
@@ -77,10 +77,16 @@
                         <span class="upload-text">Submit</span>
                     </button>
                     
-                    <!-- Scratchpad Button -->
-                    <a href="/md" class="btn-icon" title="Open Scratchpad" style="text-decoration: none; display: inline-flex;">
+                    <!-- Expiry Time Button -->
+                    <button type="button" class="btn-icon" title="Set expiry time" id="expiryButton" onclick="cycleExpiryTime()">
+                        <i class="fas fa-clock"></i>
+                        <span class="upload-text" id="expiryText">Never</span>
+                    </button>
+
+                    <!-- Notepad Button -->
+                    <a href="/md" class="btn-icon" title="Open Notepad" style="text-decoration: none; display: inline-flex;">
                         <i class="fas fa-edit"></i>
-                        <span class="upload-text">Scratchpad</span>
+                        <span class="upload-text">Notepad</span>
                     </a>
                 </div>
 
@@ -315,13 +321,13 @@
                 })
                 .catch(error => console.error('Error refreshing content:', error));
         }
-        // Refresh every 2 seconds
-        setInterval(refreshContent, 2000);
+        // Refresh every 3 seconds
+        setInterval(refreshContent, 3000);
     </script>
     <script>
         function toggleButtons() {
             const textareaContent = document.getElementById('contentTextarea').value;
-            const uploadButton = document.getElementById('uploadButton');
+            const uploadButton = document.getElementById('uploadButton').parentElement;
             const submitTextButton = document.getElementById('submitTextButton');
             
             if (textareaContent.trim() !== '') {
@@ -333,6 +339,14 @@
                 uploadButton.style.display = 'inline-flex';
                 submitTextButton.style.display = 'none';
             }
+        }
+
+        function cycleExpiryTime() {
+            const expiryValues = ["Never", "1 hour", "4 hours", "1 day"];
+            const currentText = document.getElementById('expiryText').innerText;
+            const currentIndex = expiryValues.indexOf(currentText);
+            const nextIndex = (currentIndex + 1) % expiryValues.length;
+            document.getElementById('expiryText').innerText = expiryValues[nextIndex];
         }
         
         // Initialize the button states when the page loads

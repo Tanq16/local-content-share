@@ -9,11 +9,11 @@
 
 ---
 
-A simple self-hosted app for sharing text snippets and files within your local network across any device and a scratchpad. Think of this as a simple and elegant alternative to airdrop, local-pastebin and notepad. The primary features are:
+A simple self-hosted app for sharing text snippets and files within your local network across any device and a notepad. Think of this as a simple and elegant alternative to airdrop, local-pastebin and notepad. The primary features are:
 
 - Make plain text snippets available to view/share on any device in the local network
 - Upload files and make them available to view/download on any device in the local network
-- Built-in Scratchpad with both Markdown and Rich Text editing capabilities
+- Built-in Notepad with both Markdown and Rich Text editing capabilities
 - Rename text snippets and files uploaded to easily find them in the UI
 - Edit text snippets to modify their content as needed
 - Multi-file drag-n-drop (drop into the text area) support for uploading files
@@ -115,8 +115,8 @@ go build .
    - For files, it shows raw text, images, PDFs, etc. (basically whatever way browsers can show items)
 - To download files, click the download icon
 - To delete content, click the trash icon
-- The scratchpad is only to write something quickly while leaving the tab open
+- The Notepad is only to write something quickly while leaving the tab open
    - The markdown mode can be used to render things as HTML or print as a PDF
-   - There are some other features planned for improving the scratchpad functionality
+   - There are some other features planned for improving the notepad functionality
 
 A quick note of the data structure: the application creates a `data` directory to store all uploaded files and text content (both in `files` and `text` subfolders respectively). Make sure the application has write permissions for the directory where it runs.

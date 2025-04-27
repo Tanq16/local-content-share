@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Scratchpad</title>
+  <title>Notepad</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="/style.css">
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
@@ -14,7 +14,7 @@
 </head>
 <body>
   <div class="note-container">
-    <div class="app-title">Scratchpad</div>
+    <div class="app-title">Notepad</div>
     <div class="note-header">
       <button class="btn-icon" onclick="window.location.href='/'">
         <i class="fas fa-arrow-left"></i> Back
@@ -26,7 +26,6 @@
     
     <div class="note-content">
       <div class="editor-toolbar">
-        <button onclick="selectAllText()" title="Select All"><i class="fas fa-object-group"></i></button>
         <button id="decrease-font" title="Decrease Font Size"><i class="fas fa-search-minus"></i></button>
         <button id="increase-font" title="Increase Font Size"><i class="fas fa-search-plus"></i></button>
         <button onclick="undoChange()" title="Undo"><i class="fas fa-undo"></i></button>
