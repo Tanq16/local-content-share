@@ -52,7 +52,6 @@ type Entry struct {
 	Filename string
 }
 
-
 type ExpirationTracker struct {
 	Expirations map[string]time.Time `json:"expirations"`
 	mu          sync.Mutex           // mutex for thread safety
@@ -166,8 +165,6 @@ function example() {
 const rtextPlaceholder = `<h1>Welcome to Rich Text Notepad</h1>
 <p>Start typing here to create your document. Use the toolbar above to format your text.</p>`
 
-var listenAddress = flag.String("listen", ":8080", "host:port in which the server will listen")
-
 func generateUniqueFilename(baseDir, baseName string) string {
 	// Sanitize: allow only letters, numbers, hyphen, underscore, and space
 	reg := regexp.MustCompile(`[^a-zA-Z0-9\.\-_\s]`)
@@ -188,7 +185,7 @@ func generateUniqueFilename(baseDir, baseName string) string {
 }
 
 func main() {
-  flag.Parse()
+	flag.Parse()
 
 	if err := os.MkdirAll(filepath.Join("data", "files"), 0755); err != nil {
 		log.Fatal(err)
