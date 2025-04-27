@@ -12,20 +12,32 @@ let undoStack = [];
 let redoStack = [];
 let lastChange = '';
 let isReaderMode = false;
+let lastSaveTime = Date.now();
+let saveTimeout = null;
+let isDirty = false;
 
 // Initialize Application
 document.addEventListener('DOMContentLoaded', function() {
-  markdownEditor.value = '# Welcome to Markdown Notepad\n\nStart typing your markdown here...\n\n## Features\n\n- **Bold** and *italic* text\n- [Links](https://example.com)\n- Lists (ordered and unordered)\n- Code blocks\n- And more!\n\n```\nfunction example() {\n  console.log("Hello, Markdown!");\n}\n```';
-  updatePreview();
+  loadContent();
   setupEventListeners();
-  saveState();
 });
 
 function setupEventListeners() {
   markdownEditor.addEventListener('input', function() {
     updatePreview();
     saveState();
+    isDirty = true;
+    scheduleAutoSave();
   });
+  // Save when stoped typing
+  markdownEditor.addEventListener('keyup', scheduleAutoSave);
+  // Save before leaving the page
+  window.addEventListener('beforeunload', function() {
+    if (isDirty) {
+      saveContent();
+    }
+  });
+  
   decreaseFontBtn.addEventListener('click', decreaseFontSize);
   increaseFontBtn.addEventListener('click', increaseFontSize);
   
@@ -39,8 +51,70 @@ function setupEventListeners() {
       this.selectionStart = this.selectionEnd = start + 2;
       updatePreview();
       saveState();
+      isDirty = true;
+      scheduleAutoSave();
     }
   });
+}
+
+// Load content from the backend
+function loadContent() {
+  fetch('/notepad/md.file')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.text();
+    })
+    .then(content => {
+      markdownEditor.value = content;
+      updatePreview();
+      saveState(); // This initializes the undo/redo stacks
+    })
+    .catch(error => {
+      console.error('Error loading notepad content:', error);
+      // If there's an error, we'll use whatever default content is already in the editor
+      updatePreview();
+      saveState();
+    });
+}
+
+// Save content to the backend
+function saveContent() {
+  if (!isDirty) return;
+  
+  const content = markdownEditor.value;
+  fetch('/notepad/md.file', {
+    method: 'POST',
+    body: content,
+    headers: {
+      'Content-Type': 'text/plain'
+    }
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    lastSaveTime = Date.now();
+    isDirty = false;
+    console.log('Content saved successfully');
+  })
+  .catch(error => {
+    console.error('Error saving content:', error);
+  });
+}
+
+// Schedule an auto-save after inactivity
+function scheduleAutoSave() {
+  // Clear any existing timeout
+  if (saveTimeout) {
+    clearTimeout(saveTimeout);
+  }
+  
+  // Set a new timeout - save after 2 seconds of inactivity
+  saveTimeout = setTimeout(() => {
+    saveContent();
+  }, 2000);
 }
 
 function updatePreview() {
@@ -133,6 +207,8 @@ function undoChange() {
     markdownEditor.value = previousValue;
     lastChange = previousValue;
     updatePreview();
+    isDirty = true;
+    scheduleAutoSave();
   }
 }
 
@@ -144,5 +220,7 @@ function redoChange() {
     markdownEditor.value = nextValue;
     lastChange = nextValue;
     updatePreview();
+    isDirty = true;
+    scheduleAutoSave();
   }
 }

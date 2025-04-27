@@ -49,6 +49,28 @@ type Entry struct {
 	Filename string
 }
 
+// Placeholder content for notepad files
+const mdPlaceholder = `# Welcome to Markdown Notepad
+
+Start typing your markdown here...
+
+## Features
+
+- **Bold** and *italic* text
+- [Links](https://example.com)
+- Lists (ordered and unordered)
+- Code blocks
+- And more!
+
+` + "```" + `
+function example() {
+  console.log("Hello, Markdown!");
+}
+` + "```"
+
+const rtextPlaceholder = `<h1>Welcome to Rich Text Notepad</h1>
+<p>Start typing here to create your document. Use the toolbar above to format your text.</p>`
+
 func generateUniqueFilename(baseDir, baseName string) string {
 	// Sanitize: allow only letters, numbers, hyphen, underscore, and space
 	reg := regexp.MustCompile(`[^a-zA-Z0-9\.\-_\s]`)
@@ -75,7 +97,16 @@ func main() {
 	if err := os.MkdirAll(filepath.Join("data", "text"), 0755); err != nil {
 		log.Fatal(err)
 	}
+	// Create notepad directory
+	if err := os.MkdirAll(filepath.Join("data", "notepad"), 0755); err != nil {
+		log.Fatal(err)
+	}
 	log.Println("Data directory created/reused without errors.")
+
+	// Create placeholder notepad files if they don't exist
+	createNotepadFileIfNotExists("md.file", mdPlaceholder)
+	createNotepadFileIfNotExists("rtext.file", rtextPlaceholder)
+
 	tmpl := template.Must(template.ParseFS(content, "templates/*.html"))
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -162,6 +193,47 @@ func main() {
 		w.Header().Set("Content-Type", "image/png")
 		w.Write(icon512PNG)
 		// log.Println("Served icon-512.png")
+	})
+
+	// API endpoint to load notepad content
+	http.HandleFunc("/notepad/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "GET" {
+			filename := strings.TrimPrefix(r.URL.Path, "/notepad/")
+			if filename != "md.file" && filename != "rtext.file" {
+				http.Error(w, "Invalid notepad file", http.StatusBadRequest)
+				return
+			}
+			content, err := os.ReadFile(filepath.Join("data", "notepad", filename))
+			if err != nil {
+				http.Error(w, "Error reading notepad file", http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+			w.Header().Set("Cache-Control", "no-store")
+			w.Write(content)
+			return
+		} else if r.Method == "POST" {
+			filename := strings.TrimPrefix(r.URL.Path, "/notepad/")
+			if filename != "md.file" && filename != "rtext.file" {
+				http.Error(w, "Invalid notepad file", http.StatusBadRequest)
+				return
+			}
+			content, err := io.ReadAll(r.Body)
+			if err != nil {
+				http.Error(w, "Error reading request body", http.StatusInternalServerError)
+				return
+			}
+			err = os.WriteFile(filepath.Join("data", "notepad", filename), content, 0644)
+			if err != nil {
+				http.Error(w, "Error saving notepad file", http.StatusInternalServerError)
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("Saved"))
+			log.Printf("Saved notepad content to %s\n", filename)
+			return
+		}
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	})
 
 	http.HandleFunc("/submit", func(w http.ResponseWriter, r *http.Request) {
@@ -416,4 +488,17 @@ func main() {
 
 	// Start server
 	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+
+// Helper function to create notepad files if they don't exist
+func createNotepadFileIfNotExists(filename string, defaultContent string) {
+	filePath := filepath.Join("data", "notepad", filename)
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		err := os.WriteFile(filePath, []byte(defaultContent), 0644)
+		if err != nil {
+			log.Printf("Error creating notepad file %s: %v\n", filename, err)
+		} else {
+			log.Printf("Created notepad file %s with default content\n", filename)
+		}
+	}
 }

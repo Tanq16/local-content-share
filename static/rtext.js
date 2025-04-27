@@ -6,12 +6,68 @@ const increaseFontBtn = document.getElementById('increase-font');
 // State Variables
 let lastCaretPosition = null;
 let baseFontSize = 16;
+let lastSaveTime = Date.now();
+let saveTimeout = null;
+let isDirty = false;
 
 // Initialize Application
 document.addEventListener('DOMContentLoaded', function() {
+  loadContent();
   setupEventListeners();
   updateFontSize();
 });
+
+// Load content from the backend
+function loadContent() {
+  fetch('/notepad/rtext.file')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.text();
+    })
+    .then(content => {
+      noteEditor.innerHTML = content;
+    })
+    .catch(error => {
+      console.error('Error loading notepad content:', error);
+    });
+}
+
+// Save content to the backend
+function saveContent() {
+  if (!isDirty) return;
+  const content = noteEditor.innerHTML;
+  fetch('/notepad/rtext.file', {
+    method: 'POST',
+    body: content,
+    headers: {
+      'Content-Type': 'text/plain'
+    }
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    lastSaveTime = Date.now();
+    isDirty = false;
+    console.log('Content saved successfully');
+  })
+  .catch(error => {
+    console.error('Error saving content:', error);
+  });
+}
+
+// Schedule an auto-save after inactivity
+function scheduleAutoSave() {
+  // Clear any existing timeout
+  if (saveTimeout) {
+    clearTimeout(saveTimeout);
+  }
+  saveTimeout = setTimeout(() => {
+    saveContent();
+  }, 2000);
+}
 
 // Basic Setup Functions
 function setupEventListeners() {
@@ -19,6 +75,20 @@ function setupEventListeners() {
   noteEditor.addEventListener('mouseup', updateCaretPosition);
   noteEditor.addEventListener('keyup', updateCaretPosition);
   noteEditor.addEventListener('focus', updateCaretPosition);
+  // Auto-save events
+  noteEditor.addEventListener('input', function() {
+    isDirty = true;
+    scheduleAutoSave();
+  });
+  noteEditor.addEventListener('keyup', function() {
+    scheduleAutoSave();
+  });
+  // Save before leaving the page
+  window.addEventListener('beforeunload', function() {
+    if (isDirty) {
+      saveContent();
+    }
+  });
   
   // Font size controls
   decreaseFontBtn.addEventListener('click', decreaseFontSize);
@@ -39,26 +109,24 @@ function setupEventListeners() {
     const text = (e.clipboardData || window.clipboardData).getData('text');
     if (text) {
       document.execCommand('insertText', false, text);
+      isDirty = true;
+      scheduleAutoSave();
     }
   });
 }
 
 // Editor Formatting Functions
 function formatDoc(cmd, value = null) {
-  // Special handling for horizontal rule to match text color
   if (cmd === 'insertHorizontalRule') {
     document.execCommand(cmd, false, value);
-    // Find the newly inserted HR element
     const selection = window.getSelection();
     if (selection.rangeCount > 0) {
       const range = selection.getRangeAt(0);
       let node = range.startContainer;
-      
       // Navigate up to find the contenteditable element
       while (node && node !== noteEditor) {
         node = node.parentNode;
       }
-      
       if (node) {
         // Find the most recently inserted HR element
         const hrs = node.querySelectorAll('hr');
@@ -74,6 +142,8 @@ function formatDoc(cmd, value = null) {
     document.execCommand(cmd, false, value);
   }
   noteEditor.focus();
+  isDirty = true;
+  scheduleAutoSave();
 }
 
 function updateCaretPosition() {
@@ -89,9 +159,7 @@ function createLink() {
     alert('Please select some text first');
     return;
   }
-  
   const range = selection.getRangeAt(0);
-  
   const modal = document.createElement('div');
   modal.classList.add('modal');
   modal.innerHTML = `
@@ -104,7 +172,6 @@ function createLink() {
   `;
   
   document.body.appendChild(modal);
-  
   const urlInput = modal.querySelector('#urlInput');
   urlInput.focus();
   urlInput.select();
@@ -118,7 +185,6 @@ function createLink() {
   }
   
   modal.querySelector('#confirm-link').addEventListener('click', handleConfirm);
-  
   modal.querySelector('#cancel-link').addEventListener('click', function() {
     modal.remove();
   });
@@ -149,7 +215,6 @@ function insertCodeBlock() {
   `;
   
   document.body.appendChild(modal);
-  
   const textarea = modal.querySelector('textarea');
   textarea.focus();
   
@@ -158,13 +223,14 @@ function insertCodeBlock() {
       const codeBlock = document.createElement('div');
       codeBlock.className = 'code-block';
       codeBlock.textContent = textarea.value;
-      
       if (lastCaretPosition) {
         lastCaretPosition.deleteContents();
         lastCaretPosition.insertNode(codeBlock);
       } else {
         noteEditor.appendChild(codeBlock);
       }
+      isDirty = true;
+      scheduleAutoSave();
     }
     modal.remove();
   });
@@ -172,7 +238,6 @@ function insertCodeBlock() {
   modal.querySelector('#cancel-code').addEventListener('click', function() {
     modal.remove();
   });
-  
   modal.addEventListener('click', function(e) {
     if (e.target === modal) {
       modal.remove();
@@ -192,7 +257,6 @@ function insertTable() {
   `;
   
   document.body.appendChild(modal);
-  
   const grid = modal.querySelector('.grid');
   const MAX_SIZE = 10;
   let selectedRows = 0;
@@ -231,7 +295,6 @@ function insertTable() {
     document.querySelectorAll('.cell').forEach(cell => {
       const cellRow = +cell.dataset.row;
       const cellCol = +cell.dataset.col;
-      
       cell.classList.toggle('selected', cellRow <= rows && cellCol <= cols);
     });
   }
@@ -245,7 +308,6 @@ function insertTable() {
     for (let j = 0; j < cols; j++) {
       tableHtml += `<th>${ZERO_WIDTH_SPACE}</th>`;
     }
-    
     tableHtml += '</tr></thead><tbody>';
     
     // Create rows and cells
@@ -258,10 +320,8 @@ function insertTable() {
     }
     
     tableHtml += '</tbody></table>';
-    
     const tableElement = document.createElement('div');
     tableElement.innerHTML = tableHtml;
-    
     if (lastCaretPosition) {
       lastCaretPosition.deleteContents();
       lastCaretPosition.insertNode(tableElement.firstChild);
@@ -281,6 +341,8 @@ function insertTable() {
     table.appendChild(resizeHandle);
     
     setupTableResizing(table, resizeHandle);
+    isDirty = true;
+    scheduleAutoSave();
   }
   
   modal.querySelector('#cancel-table').addEventListener('click', function() {
@@ -295,7 +357,6 @@ function setupTableResizing(table, handle) {
   let startWidth, startHeight;
   
   handle.addEventListener('mousedown', startResize);
-  
   function startResize(e) {
     e.preventDefault();
     e.stopPropagation();
@@ -312,14 +373,11 @@ function setupTableResizing(table, handle) {
   
   function resize(e) {
     if (!isResizing) return;
-    
     const width = startWidth + (e.clientX - startX);
     const height = startHeight + (e.clientY - startY);
-    
     if (width > 100) {
       table.style.width = `${width}px`;
     }
-    
     if (height > 50) {
       table.style.height = `${height}px`;
     }
@@ -329,6 +387,8 @@ function setupTableResizing(table, handle) {
     isResizing = false;
     document.removeEventListener('mousemove', resize);
     document.removeEventListener('mouseup', stopResize);
+    isDirty = true;
+    scheduleAutoSave();
   }
 }
 
@@ -349,19 +409,15 @@ function increaseFontSize() {
 
 function updateFontSize() {
   noteEditor.style.fontSize = `${baseFontSize}px`;
-  
   noteEditor.querySelectorAll("h1").forEach(h1 => {
     h1.style.fontSize = `${baseFontSize * 1.5}px`;
   });
-  
   noteEditor.querySelectorAll("h2").forEach(h2 => {
     h2.style.fontSize = `${baseFontSize * 1.3}px`;
   });
-  
   noteEditor.querySelectorAll("th, td").forEach(cell => {
     cell.style.fontSize = `${baseFontSize}px`;
   });
-  
   noteEditor.querySelectorAll(".code-block").forEach(codeBlock => {
     codeBlock.style.fontSize = `${baseFontSize}px`;
   });
