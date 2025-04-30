@@ -118,19 +118,21 @@
                     <div class="entries-grid">
                         {{range .}}
                             {{if eq .Type "text"}}
-                            <div class="entry-card">
+                            <div class="entry-card" style="position: relative; cursor: pointer;">
+                                <!-- Clickable overlay covering the whole card except the buttons -->
+                                <a href="/show/{{.ID}}" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1;"></a>
                                 <div class="entry-content">{{.Filename}}</div>
                                 <div class="entry-actions">
-                                    <button onclick="showRenamePrompt('{{.ID}}')" class="btn-icon-small" title="Rename">
+                                    <button onclick="event.preventDefault(); showRenamePrompt('{{.ID}}')" class="btn-icon-small" title="Rename" style="position: relative; z-index: 2;">
                                         <i class="fas fa-i-cursor"></i>
                                     </button>
-                                    <button onclick="showEditForm('{{.ID}}')" class="btn-icon-small" title="Edit">
+                                    <button onclick="event.preventDefault(); showEditForm('{{.ID}}')" class="btn-icon-small" title="Edit" style="position: relative; z-index: 2;">
                                         <i class="fas fa-pen"></i>
                                     </button>
-                                    <a href="/show/{{.ID}}" class="btn-icon-small" title="Show">
+                                    <a href="/show/{{.ID}}" class="btn-icon-small" title="Show" style="position: relative; z-index: 2;">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <a href="/delete/{{.ID}}" class="btn-icon-small" title="Delete">
+                                    <a href="/delete/{{.ID}}" class="btn-icon-small" title="Delete" style="position: relative; z-index: 2;">
                                         <i class="fas fa-trash"></i>
                                     </a>
                                 </div>
@@ -146,19 +148,21 @@
                     <div class="entries-grid-files">
                         {{range .}}
                             {{if eq .Type "file"}}
-                            <div class="entry-card">
+                            <div class="entry-card" style="position: relative; cursor: pointer;">
+                                <!-- Clickable overlay covering the whole card except the buttons -->
+                                <a href="/view/{{.ID}}" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1;"></a>
                                 <div class="entry-content">{{.Filename}}</div>
                                 <div class="entry-actions">
-                                    <button onclick="showRenamePrompt('{{.ID}}')" class="btn-icon-small" title="Rename">
+                                    <button onclick="event.preventDefault(); showRenamePrompt('{{.ID}}')" class="btn-icon-small" title="Rename" style="position: relative; z-index: 2;">
                                         <i class="fas fa-i-cursor"></i>
                                     </button>
-                                    <a href="/download/{{.ID}}" class="btn-icon-small" title="Download">
+                                    <a href="/download/{{.ID}}" class="btn-icon-small" title="Download" style="position: relative; z-index: 2;">
                                         <i class="fas fa-download"></i>
                                     </a>
-                                    <a href="/view/{{.ID}}" class="btn-icon-small" title="View">
+                                    <a href="/view/{{.ID}}" class="btn-icon-small" title="View" style="position: relative; z-index: 2;">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <a href="/delete/{{.ID}}" class="btn-icon-small" title="Delete">
+                                    <a href="/delete/{{.ID}}" class="btn-icon-small" title="Delete" style="position: relative; z-index: 2;">
                                         <i class="fas fa-trash"></i>
                                     </a>
                                 </div>
