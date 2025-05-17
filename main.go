@@ -150,7 +150,7 @@ const rtextPlaceholder = `<h1>Welcome to Rich Text Notepad</h1>
 
 func generateUniqueFilename(baseDir, baseName string) string {
 	// Sanitize: allow only letters, numbers, hyphen, underscore, and space
-	reg := regexp.MustCompile(`[^a-zA-Z0-9\.\-_\s]`)
+	reg := regexp.MustCompile(`[^\p{L}\p{N}\p{M}\s\.\-_]`)
 	sanitizedName := reg.ReplaceAllString(baseName, "-")
 	log.Printf("Sanitized name %s -TO- %s\n", baseName, sanitizedName)
 	// First try without random prefix
