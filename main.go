@@ -161,6 +161,7 @@ func (t *ExpirationTracker) CleanupExpired() []string {
 	}
 	if len(expiredFiles) > 0 {
 		t.saveToFile()
+		notifyContentChange()
 	}
 	return expiredFiles
 }
@@ -242,7 +243,6 @@ func handleContentUpdates(w http.ResponseWriter, r *http.Request) {
 func notifyContentChange() {
 	clientMux.Lock()
 	defer clientMux.Unlock()
-
 	for client := range clients {
 		select {
 		case client <- "content_updated":
@@ -287,7 +287,7 @@ func main() {
 
 	// Goroutine to periodically expire files
 	go func() {
-		ticker := time.NewTicker(4 * time.Minute) // 4 minutes is sparse enough, load is extremely minimal
+		ticker := time.NewTicker(3 * time.Minute) // 3 minutes is sparse enough, load is extremely minimal as the operation is fast (in memory tracker)
 		defer ticker.Stop()
 		for range ticker.C {
 			expirationTracker.CleanupExpired()
