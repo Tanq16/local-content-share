@@ -9,24 +9,22 @@
 
 ---
 
-A simple self-hosted app for sharing text snippets and files within your local network across any device. It also includes and a notepad to throw rough notes in. Think of this as a simple and elegant alternative to airdrop, local-pastebin and a scratchpad. The primary features are:
+A simple & elegant self-hosted app for **storing/sharing text snippets and files** in your **local network** with **no setup on client devices**. Think of this as an *all-in-one alternative* to **airdrop**, **local-pastebin**, and a **scratchpad**. The primary features are:
 
-- Make plain text snippets available to view/share on any device in the local network
-- Upload files and make them available to view/download on any device in the local network
-- Built-in Notepad with both Markdown and Rich Text editing capabilities
-- Rename text snippets and files uploaded to easily find them in the UI
-- Edit text snippets to modify their content as needed
-- Multi-file drag-n-drop (drop into the text area) support for uploading files
-- Configurable expiration per file or snippet for 1 hour, 4 hours, or 1 day
+- Make plain text **snippets** available to **view/share** on any device in the local network
+- **Upload files** and make them available to **view/download** on any device in the local network
+- Built-in **Notepad** with both **Markdown** and **Rich Text** editing capabilities
+- **Rename** text snippets and files uploaded to easily find them in the UI
+- **Edit** text snippets to modify their content as needed
+- **Multi-file** **drag-n-drop** (drop into the text area) support for uploading files
+- Configurable **expiration (or TTL, i.e., time to live)** per file/snippet for Never, 1 hour, 4 hours, 1 day, or Custom
+- Use of **SSE** to automatically inform all clients of new/deleted/edited files
+- Completely **local assets**, so the app works in your network even without internet
+- **Multi-arch** (x86-64 and ARM64) **Docker image** for **homelab** deployments
+- Frontend available over **browsers** and as a **PWA** (progressive web apps)
+- Clean, modern interface with **automatic light/dark** UI that looks good on mobile too
 
-From a technology perspective, the app boasts the following:
-
-- Pure HTTP API, i.e., *no use of websockets* - this is good because it means *no external communications needed* for the sharing aspect
-- Available as a binary for MacOS, Windows, and Linux for both x86-64 and ARM64 architectures
-- Multi-arch (x86-64 and ARM64) Docker image for homelab deployments
-- Works well with reverse proxies in the mix (tested with Cloudflare tunnels and Nginx Proxy Manager)
-- Frontend available over browsers and as a PWA (so it shows as an app with an icon on the mobile home screens)
-- Clean, modern interface with dark mode support that looks good on mobile too
+Make sure to look into [Tips & Notes](#tips-and-notes) if you have questions about individual functionalities.
 
 > [!NOTE]
 > This application is meant to be deployed within your homelab only. There is no authentication mechanism implemented. If you are exposing to the public, ensure there is authentication fronting it and non-destructive users using it.
@@ -56,7 +54,7 @@ From a technology perspective, the app boasts the following:
 
 ## Installation and Usage
 
-### Using Docker (Recommended)
+### Using Docker (Recommended for Self-Hosting)
 
 Use `docker` CLI one liner and setup a persistence directory (so a container failure does not delete your data):
 
@@ -70,7 +68,7 @@ docker run --name local-content-share \
   tanq16/local-content-share:main
 ```
 
-The application will be available at `http://localhost:8080`
+The application will be available at `http://localhost:8080` (or your server IP).
 
 You can also use the following compose file with container managers like Portainer and Dockge (remember to change the mounted volume):
 
@@ -91,7 +89,7 @@ Download the appropriate binary for your system from the [latest release](https:
 
 Make the binary executable (for Linux/macOS) with `chmod +x local-content-share-*` and then run the binary with `./local-content-share-*`. The application will be available at `http://localhost:8080`.
 
-### Using Go
+### Local development
 
 With `Go 1.23+` installed, run the following to download the binary to your GOBIN:
 
@@ -131,17 +129,29 @@ go build .
 - To delete content, click the trash icon
 - To set expiration for a file or snippet
    - Click the clock icon with the "Never" text (signifying no expiry) to cycle between times
-   - Set the cycling button to 1 hour, 4 hours, or 1 day before adding a snippet or file
    - For a non-"Never" expiration, the file will automatically be removed after the specified period
+   - Set the cycling button to 1 hour, 4 hours, 1 day, or Custom before adding a snippet or file
+      - The Custom option will prompt to ask for the expiry after you click submit/upload
+      - The value for custom expiration can be of the format `NT` (eg. `34m`, `3w`, `2M`, `11d`)
+      - N is the number and T is the time denomination (m=minute, h=hour, d=day, w=week, M=month, y=year)
+   - Use the `DEFAULT_EXPIRY` environment variable to set a default expiration
+      - This value will be set as default on the home page instead of `Never`
+      - The other options will still be available by cycling if needed
 - The Notepad is for writing something quickly and getting back to it from any device
    - It supports both markdown and richtext modes
    - Content is automatically saved upon inactivity in the backend and will load as is on any device
 
-A quick note of the data structure: the application creates a `data` directory to store all uploaded files, uploaded text snippets, notepad notes (in `files`, `text`, and `notepad` subfolders respectively). File expirations are saved in an `expiration.json` file in the data directory. Make sure the application has write permissions for the directory where it runs.
+### A Note on Reverse Proxies
+
+Reverse proxies are fairly common in homelab settings to assign SSL certificates
+
+### Backend Data Structure
+
+The application creates a `data` directory to store all uploaded files, uploaded text snippets, notepad notes (in `files`, `text`, and `notepad` subfolders respectively). File expirations are saved in an `expiration.json` file in the data directory. Make sure the application has write permissions for the directory where it runs.
 
 ## Acknowledgements
 
 The following people have contributed to the project:
 
 - [TheArktect](https://github.com/TheArktect) - Added CLI argument for listen address.
-- Several other users who created feature requests via GitHub issues.
+- A lot of other users who created feature requests via GitHub issues.
