@@ -21,6 +21,7 @@
     --dark-text: #E5E7EB;
     --dark-text-secondary: #9CA3AF;
     --dark-border: #303948;
+    --light-custom-bg: #EAEBED;
 
     /* Semantic Variables - Light Mode Default */
     --primary: var(--purple-primary);
@@ -32,6 +33,7 @@
     --bg-primary: var(--bg);
     --bg-secondary: var(--white);
     --bg-tertiary: var(--gray-100);
+    --bg-button: var(--light-custom-bg);
     
     /* Text colors */
     --text-primary: var(--gray-700);
@@ -72,6 +74,7 @@
         --bg-primary: var(--dark-bg);
         --bg-secondary: var(--dark-card);
         --bg-tertiary: var(--dark-hover);
+        --bg-button: var(--gray-100);
         
         --text-primary: var(--dark-text);
         --text-secondary: var(--dark-text-secondary);
@@ -164,12 +167,8 @@ h1 {
 }
 
 @media (prefers-color-scheme: dark) {
-    .compose-card, .content-view {
+    .compose-card {
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    }
-    
-    .entry-card:hover {
-        box-shadow: 0 8px 24px rgba(90, 90, 90, 0.1);
     }
 }
 
@@ -261,7 +260,7 @@ textarea::placeholder {
 
 .btn-icon {
     padding: 8px 16px;
-    background: var(--bg-tertiary);
+    background: var(--bg-button);
     color: var(--text-secondary);
     border-radius: 12px;
     transition: all 0.2s ease;
@@ -403,6 +402,12 @@ input[type="file"] {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
+@media (prefers-color-scheme: dark) {
+    .entry-card:hover {
+        box-shadow: 0 8px 24px rgba(90, 90, 90, 0.1);
+    }
+}
+
 .entry-content {
     font-size: 0.95rem;
     color: var(--text-secondary);
@@ -458,6 +463,12 @@ input[type="file"] {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     color: var(--text-primary);
     box-shadow: 0 4px 20px rgba(124, 58, 237, 0.05);
+}
+
+@media (prefers-color-scheme: dark) {
+    .content-view {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
 }
 
 /* Notepad Styles (Both MD and Rich Text) */
