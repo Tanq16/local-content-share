@@ -42,6 +42,7 @@ type ExpirationTracker struct {
 }
 
 var expirationTracker *ExpirationTracker
+var expirationOptions = []string{"Never", "1 hour", "4 hours", "1 day", "Custom"}
 
 func initExpirationTracker() *ExpirationTracker {
 	tracker := &ExpirationTracker{
@@ -110,7 +111,7 @@ func (t *ExpirationTracker) SetExpiration(fileID, expiryOption string) {
 		case "1 day":
 			duration = 24 * time.Hour
 		case "Custom":
-			// For future
+			// Should not happen anymore.
 			return
 		default:
 			if len(expiryOption) > 0 {
@@ -271,6 +272,18 @@ func main() {
 
 	// Initialize the expiration tracker
 	expirationTracker = initExpirationTracker()
+	customExpiry := os.Getenv("DEFAULT_EXPIRY")
+	if customExpiry != "" {
+		if customExpiry == "1d" {
+			expirationOptions = []string{"1 day", "Never", "1 hour", "4 hours", "Custom"}
+		} else if customExpiry == "4h" {
+			expirationOptions = []string{"4 hours", "Never", "1 hour", "1 day", "Custom"}
+		} else if customExpiry == "1h" {
+			expirationOptions = []string{"1 hour", "Never", "4 hours", "1 day", "Custom"}
+		} else {
+			expirationOptions = append([]string{customExpiry}, expirationOptions...)
+		}
+	}
 
 	// Goroutine to periodically expire files
 	go func() {
@@ -324,6 +337,12 @@ func main() {
 
 	http.HandleFunc("/rtext", func(w http.ResponseWriter, r *http.Request) {
 		tmpl.ExecuteTemplate(w, "rtext.html", nil)
+	})
+
+	// Retrieve custom expiration options
+	http.HandleFunc("/getExpiryOptions", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(expirationOptions)
 	})
 
 	// Serve static files from embedded filesystem
