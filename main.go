@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"io/fs"
 	"log"
 	"math/rand"
 	"net/http"
@@ -18,32 +19,8 @@ import (
 	"time"
 )
 
-//go:embed templates/*
+//go:embed templates/* static/*
 var content embed.FS
-
-//go:embed static/style.css
-var styleCSS []byte
-
-//go:embed static/favicon.ico
-var faviconICO []byte
-
-//go:embed static/manifest.json
-var manifestJSON []byte
-
-//go:embed static/sw.js
-var serviceWorkerJS []byte
-
-//go:embed static/icon-192.png
-var icon192PNG []byte
-
-//go:embed static/icon-512.png
-var icon512PNG []byte
-
-//go:embed static/md.js
-var mdJS []byte
-
-//go:embed static/rtext.js
-var rtextJS []byte
 
 type Entry struct {
 	ID       string
@@ -260,45 +237,12 @@ func main() {
 		tmpl.ExecuteTemplate(w, "rtext.html", nil)
 	})
 
-	http.HandleFunc("/md.js", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/javascript")
-		w.Write(mdJS)
-	})
-
-	http.HandleFunc("/rtext.js", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/javascript")
-		w.Write(rtextJS)
-	})
-
-	http.HandleFunc("/style.css", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/css")
-		w.Write(styleCSS)
-	})
-
-	http.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "image/x-icon")
-		w.Write(faviconICO)
-	})
-
-	http.HandleFunc("/manifest.json", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(manifestJSON)
-	})
-
-	http.HandleFunc("/sw.js", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/javascript")
-		w.Write(serviceWorkerJS)
-	})
-
-	http.HandleFunc("/icon-192.png", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "image/png")
-		w.Write(icon192PNG)
-	})
-
-	http.HandleFunc("/icon-512.png", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "image/png")
-		w.Write(icon512PNG)
-	})
+	// Serve static files from embedded filesystem
+	staticFS, err := fs.Sub(content, "static")
+	if err != nil {
+		log.Fatalf("Failed to create static sub-filesystem: %v", err)
+	}
+	http.Handle("/static/", http.FileServer(http.FS(staticFS)))
 
 	// API endpoint to load notepad content
 	http.HandleFunc("/notepad/", func(w http.ResponseWriter, r *http.Request) {
