@@ -14,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -60,6 +61,40 @@ func initExpirationTracker() *ExpirationTracker {
 	return tracker
 }
 
+func parseCustomDuration(customExpiry string) time.Duration {
+	customExpiry = strings.TrimSpace(customExpiry)
+	// Regex to match the format like 1h, 30m, 2d, etc.
+	re := regexp.MustCompile(`^(\d+)([hmMdwy])$`)
+	matches := re.FindStringSubmatch(customExpiry)
+	if len(matches) < 2 { // bad value
+		return 5 * time.Minute
+	}
+	value, err := strconv.Atoi(matches[1])
+	if err != nil {
+		return 5 * time.Minute
+	}
+	unit := strings.ToLower(matches[2])
+	switch unit {
+	case "m": // minutes
+		if value < 5 {
+			return 5 * time.Minute
+		}
+		return time.Duration(value) * time.Minute
+	case "h": // hours
+		return time.Duration(value) * time.Hour
+	case "d": // days
+		return time.Duration(value) * 24 * time.Hour
+	case "w": // weeks
+		return time.Duration(value) * 7 * 24 * time.Hour
+	case "M": // months
+		return time.Duration(value) * 30 * 24 * time.Hour
+	case "y": // years
+		return time.Duration(value) * 365 * 24 * time.Hour
+	default:
+		return 5 * time.Minute
+	}
+}
+
 func (t *ExpirationTracker) SetExpiration(fileID, expiryOption string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -74,12 +109,17 @@ func (t *ExpirationTracker) SetExpiration(fileID, expiryOption string) {
 			duration = 4 * time.Hour
 		case "1 day":
 			duration = 24 * time.Hour
-		default:
-			// Default to no expiration
-			delete(t.Expirations, fileID)
+		case "Custom":
+			// For future
 			return
+		default:
+			if len(expiryOption) > 0 {
+				duration = parseCustomDuration(expiryOption)
+			} else {
+				delete(t.Expirations, fileID)
+				return
+			}
 		}
-		// Set the expiration time
 		t.Expirations[fileID] = time.Now().Add(duration)
 	}
 	t.saveToFile()
@@ -152,7 +192,7 @@ func generateUniqueFilename(baseDir, baseName string) string {
 	// Sanitize: allow only letters, numbers, hyphen, underscore, and space
 	reg := regexp.MustCompile(`[^\p{L}\p{N}\p{M}\s\.\-_]`)
 	sanitizedName := reg.ReplaceAllString(baseName, "-")
-	log.Printf("Sanitized name %s -TO- %s\n", baseName, sanitizedName)
+	log.Printf("Sanitized name %s TO %s\n", baseName, sanitizedName)
 	// First try without random prefix
 	if _, err := os.Stat(filepath.Join(baseDir, sanitizedName)); os.IsNotExist(err) {
 		return sanitizedName
@@ -234,7 +274,7 @@ func main() {
 
 	// Goroutine to periodically expire files
 	go func() {
-		ticker := time.NewTicker(30 * time.Minute)
+		ticker := time.NewTicker(4 * time.Minute) // 4 minutes is sparse enough, load is extremely minimal
 		defer ticker.Stop()
 		for range ticker.C {
 			expirationTracker.CleanupExpired()

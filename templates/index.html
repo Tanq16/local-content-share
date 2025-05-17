@@ -195,6 +195,15 @@
             document.getElementById('dropZone').classList.remove('drag-over');
             const files = e.dataTransfer.files;
             if (files.length > 0) {
+                const expiryValue = document.getElementById('expiryValue').value;
+                if (expiryValue === "Custom") {
+                    const customValue = prompt("Enter a custom expiration time (e.g., 1h, 30m, 2d, 1w, 1M, 1y):");
+                    if (!customValue) {
+                        document.getElementById('expiryValue').value = "Never";
+                        return; 
+                    }
+                    document.getElementById('expiryValue').value = customValue;
+                }
                 const formData = new FormData();
                 formData.append('type', 'file');
                 formData.append('expiry', document.getElementById('expiryValue').value);
@@ -238,6 +247,15 @@
         function handleFileSelect(event) {
             const files = event.target.files;
             if (files.length > 0) {
+                const expiryValue = document.getElementById('expiryValue').value;
+                if (expiryValue === "Custom") {
+                    const customValue = prompt("Enter a custom expiration time (e.g., 1h, 30m, 2d, 1w, 1M, 1y):");
+                    if (!customValue) {
+                        document.getElementById('expiryValue').value = "Never";
+                        return; 
+                    }
+                    document.getElementById('expiryValue').value = customValue;
+                }
                 const formData = new FormData();
                 formData.append('type', 'file');
                 formData.append('expiry', document.getElementById('expiryValue').value);
@@ -362,7 +380,7 @@
         }
 
         function cycleExpiryTime() {
-            const expiryValues = ["Never", "1 hour", "4 hours", "1 day"];
+            const expiryValues = ["Never", "1 hour", "4 hours", "1 day", "Custom"];
             const currentText = document.getElementById('expiryText').innerText;
             const currentIndex = expiryValues.indexOf(currentText);
             const nextIndex = (currentIndex + 1) % expiryValues.length;
@@ -374,6 +392,17 @@
         // Initialize the button states when the page loads
         document.addEventListener('DOMContentLoaded', function() {
             toggleButtons();
+            // Handle custom expiration for text submission
+            document.getElementById('submitTextButton').addEventListener('click', function(event) {
+                const expiryValue = document.getElementById('expiryValue').value;
+                if (expiryValue === "Custom") {
+                    event.preventDefault();
+                    const customValue = prompt("Enter a custom expiration time (e.g., 1h, 30m, 2d, 1w, 1M, 1y):");
+                    if (!customValue) return;
+                    document.getElementById('expiryValue').value = customValue;
+                    document.getElementById('textForm').submit();
+                }
+            });
         });
     </script>
 </body>
