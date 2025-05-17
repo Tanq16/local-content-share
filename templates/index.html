@@ -6,8 +6,8 @@
     <title>Local-Content-Share</title>
     <link rel="stylesheet" href="/style.css">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="/static/css/inter.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/fontawesome/css/all.min.css">
     
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#7C3AED">
@@ -64,6 +64,7 @@
                     <!-- File Upload Form -->
                     <form action="/submit" method="POST" enctype="multipart/form-data" id="fileForm" class="file-upload-form" style="margin-bottom: 0;">
                         <input type="hidden" name="type" value="file">
+                        <input type="hidden" name="expiry" id="fileExpiryValue" value="Never">
                         <label class="btn-icon" title="Upload files" id="uploadButton">
                             <i class="fas fa-cloud-upload-alt"></i>
                             <span class="upload-text">Upload</span>
@@ -72,7 +73,7 @@
                     </form>
                     
                     <!-- Text Submit Button (initially hidden) -->
-                    <button type="button" class="btn-icon" title="Submit text" id="submitTextButton" onclick="document.getElementById('textForm').submit();" style="display: none;">
+                    <button type="button" class="btn-icon" title="Submit text" id="submitTextButton" onclick="submitTextForm()" style="display: none;">
                         <i class="fas fa-paper-plane"></i>
                         <span class="upload-text">Submit</span>
                     </button>
@@ -104,7 +105,7 @@
                 <div class="compose-card" id="dropZone" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragleave="handleDragLeave(event)" ondragenter="handleDragEnter(event)">
                     <form action="/submit" method="POST" enctype="multipart/form-data" id="textForm">
                         <input type="hidden" name="type" value="text">
-                        <input type="hidden" name="expiry" id="expiryValue" value="Never">
+                        <input type="hidden" name="expiry" id="textExpiryValue" value="Never">
                         <input type="text" name="filename" placeholder="Name (defaults to date string)" class="filename-input">
                         <textarea name="content" placeholder="Add text snippets to store or share, or drag and drop files here!" rows="4" id="contentTextarea" oninput="toggleButtons()"></textarea>
                     </form>
@@ -195,87 +196,82 @@
             document.getElementById('dropZone').classList.remove('drag-over');
             const files = e.dataTransfer.files;
             if (files.length > 0) {
-                const formData = new FormData();
-                formData.append('type', 'file');
-                formData.append('expiry', document.getElementById('expiryValue').value);
-                for (let i = 0; i < files.length; i++) {
-                    formData.append('multifile', files[i]);
+                if (handleCustomExpiry()) {
+                    uploadFiles(files);
                 }
-                // Progress
-                const progressContainer = document.getElementById('progress-container');
-                const progressBar = document.getElementById('progress-bar');
-                const progressText = document.getElementById('progress-text');
-                progressContainer.style.display = 'block';
-                progressBar.style.width = '0%';
-                progressText.innerText = 'Uploading... 0%';
-                
-                const xhr = new XMLHttpRequest();
-                xhr.open('POST', '/submit', true);
-                xhr.upload.onprogress = function(e) {
-                    if (e.lengthComputable) {
-                        const percentComplete = Math.round((e.loaded / e.total) * 100);
-                        progressBar.style.width = percentComplete + '%';
-                        progressText.innerText = `Uploading... ${percentComplete}%`;
-                    }
-                };
-                xhr.onload = function() {
-                    if (xhr.status === 200 || xhr.status === 303) {
-                        progressText.innerText = 'Upload complete!';
-                        progressBar.style.width = '100%';
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 500);
-                    } else {
-                        progressText.innerText = 'Upload failed!';
-                    }
-                };
-                xhr.onerror = function() {
-                    progressText.innerText = 'Upload failed!';
-                };
-                xhr.send(formData);
             }
         }
         function handleFileSelect(event) {
             const files = event.target.files;
             if (files.length > 0) {
-                const formData = new FormData();
-                formData.append('type', 'file');
-                formData.append('expiry', document.getElementById('expiryValue').value);
-                for (let i = 0; i < files.length; i++) {
-                    formData.append('multifile', files[i]);
+                if (handleCustomExpiry()) {
+                    uploadFiles(files);
                 }
-                const progressContainer = document.getElementById('progress-container');
-                const progressBar = document.getElementById('progress-bar');
-                const progressText = document.getElementById('progress-text');
-                progressContainer.style.display = 'block';
-                progressBar.style.width = '0%';
-                progressText.innerText = 'Uploading... 0%';
-                
-                const xhr = new XMLHttpRequest();
-                xhr.open('POST', '/submit', true);
-                xhr.upload.onprogress = function(e) {
-                    if (e.lengthComputable) {
-                        const percentComplete = Math.round((e.loaded / e.total) * 100);
-                        progressBar.style.width = percentComplete + '%';
-                        progressText.innerText = `Uploading... ${percentComplete}%`;
-                    }
-                };
-                xhr.onload = function() {
-                    if (xhr.status === 200 || xhr.status === 303) {
-                        progressText.innerText = 'Upload complete!';
-                        progressBar.style.width = '100%';
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 500);
-                    } else {
-                        progressText.innerText = 'Upload failed!';
-                    }
-                };
-                xhr.onerror = function() {
-                    progressText.innerText = 'Upload failed!';
-                };
-                xhr.send(formData);
             }
+        }
+        
+        // Handle custom expiry selection
+        function handleCustomExpiry() {
+            const currentExpiry = document.getElementById('expiryText').innerText;
+            
+            if (currentExpiry === "Custom") {
+                const customValue = prompt("Enter a custom expiration time (e.g., 1h, 30m, 2d, 1w, 1M, 1y):");
+                if (!customValue) {
+                    // User cancelled, revert to "Never"
+                    document.getElementById('expiryText').innerText = "Never";
+                    document.getElementById('textExpiryValue').value = "Never";
+                    document.getElementById('fileExpiryValue').value = "Never";
+                    return false;
+                }
+                document.getElementById('textExpiryValue').value = customValue;
+                document.getElementById('fileExpiryValue').value = customValue;
+                return true;
+            }
+            // Pre-defined expiration
+            document.getElementById('textExpiryValue').value = currentExpiry;
+            document.getElementById('fileExpiryValue').value = currentExpiry;
+            return true;
+        }
+        
+        function uploadFiles(files) {
+            const formData = new FormData();
+            formData.append('type', 'file');
+            formData.append('expiry', document.getElementById('fileExpiryValue').value);
+            
+            for (let i = 0; i < files.length; i++) {
+                formData.append('multifile', files[i]);
+            }
+            const progressContainer = document.getElementById('progress-container');
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+            progressText.innerText = 'Uploading... 0%';
+            
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/submit', true);
+            xhr.upload.onprogress = function(e) {
+                if (e.lengthComputable) {
+                    const percentComplete = Math.round((e.loaded / e.total) * 100);
+                    progressBar.style.width = percentComplete + '%';
+                    progressText.innerText = `Uploading... ${percentComplete}%`;
+                }
+            };
+            xhr.onload = function() {
+                if (xhr.status === 200 || xhr.status === 303) {
+                    progressText.innerText = 'Upload complete!';
+                    progressBar.style.width = '100%';
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+                } else {
+                    progressText.innerText = 'Upload failed!';
+                }
+            };
+            xhr.onerror = function() {
+                progressText.innerText = 'Upload failed!';
+            };
+            xhr.send(formData);
         }
     </script>
     <script>
@@ -308,28 +304,41 @@
             // Set focus on textarea
             modal.querySelector('textarea').focus();
         }
-
-        function refreshContent() {
-            fetch(window.location.href)
-                .then(response => response.text())
-                .then(html => {
-                    const parser = new DOMParser();
-                    const newDoc = parser.parseFromString(html, 'text/html');
-                    const currentGrid = document.querySelector('.entries-grid');
-                    const newGrid = newDoc.querySelector('.entries-grid');
-                    if (currentGrid && newGrid && currentGrid.innerHTML !== newGrid.innerHTML) {
-                        currentGrid.innerHTML = newGrid.innerHTML;
-                    }
-                    const currentGridFiles = document.querySelector('.entries-grid-files');
-                    const newGridFiles = newDoc.querySelector('.entries-grid-files');
-                    if (currentGridFiles && newGridFiles && currentGridFiles.innerHTML !== newGridFiles.innerHTML) {
-                        currentGridFiles.innerHTML = newGridFiles.innerHTML;
-                    }
-                })
-                .catch(error => console.error('Error refreshing content:', error));
-        }
-        // Refresh every 3 seconds
-        setInterval(refreshContent, 3000);
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const evtSource = new EventSource("/api/updates");
+            evtSource.onmessage = function(event) {
+                if (event.data === "content_updated") {
+                    refreshContent();
+                }
+            };
+            // Try reconnection on failure
+            evtSource.onerror = function() {
+                evtSource.close();
+                setTimeout(() => {
+                    new EventSource("/api/updates");
+                }, 3000);
+            };
+            
+            function refreshContent() {
+                fetch(window.location.href).then(response => response.text()).then(html => {
+                        const parser = new DOMParser();
+                        const newDoc = parser.parseFromString(html, 'text/html');
+                        const currentGrid = document.querySelector('.entries-grid');
+                        const newGrid = newDoc.querySelector('.entries-grid');
+                        if (currentGrid && newGrid && currentGrid.innerHTML !== newGrid.innerHTML) {
+                            currentGrid.innerHTML = newGrid.innerHTML;
+                        }
+                        const currentGridFiles = document.querySelector('.entries-grid-files');
+                        const newGridFiles = newDoc.querySelector('.entries-grid-files');
+                        if (currentGridFiles && newGridFiles && currentGridFiles.innerHTML !== newGridFiles.innerHTML) {
+                            currentGridFiles.innerHTML = newGridFiles.innerHTML;
+                        }
+                    }).catch(error => console.error('Error refreshing content:', error)
+                );
+            }
+        });
     </script>
     <script>
         function toggleButtons() {
@@ -349,13 +358,22 @@
         }
 
         function cycleExpiryTime() {
-            const expiryValues = ["Never", "1 hour", "4 hours", "1 day"];
+            const expiryValues = ["Never", "1 hour", "4 hours", "1 day", "Custom"];
             const currentText = document.getElementById('expiryText').innerText;
             const currentIndex = expiryValues.indexOf(currentText);
             const nextIndex = (currentIndex + 1) % expiryValues.length;
             const newValue = expiryValues[nextIndex];
             document.getElementById('expiryText').innerText = newValue;
-            document.getElementById('expiryValue').value = newValue;
+            // Update both expiry value fields to keep in sync
+            document.getElementById('textExpiryValue').value = newValue;
+            document.getElementById('fileExpiryValue').value = newValue;
+        }
+        
+        // Submit text form with custom expiry handling
+        function submitTextForm() {
+            if (handleCustomExpiry()) {
+                document.getElementById('textForm').submit();
+            }
         }
         
         // Initialize the button states when the page loads
