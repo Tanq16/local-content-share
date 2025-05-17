@@ -308,28 +308,41 @@
             // Set focus on textarea
             modal.querySelector('textarea').focus();
         }
-
-        function refreshContent() {
-            fetch(window.location.href)
-                .then(response => response.text())
-                .then(html => {
-                    const parser = new DOMParser();
-                    const newDoc = parser.parseFromString(html, 'text/html');
-                    const currentGrid = document.querySelector('.entries-grid');
-                    const newGrid = newDoc.querySelector('.entries-grid');
-                    if (currentGrid && newGrid && currentGrid.innerHTML !== newGrid.innerHTML) {
-                        currentGrid.innerHTML = newGrid.innerHTML;
-                    }
-                    const currentGridFiles = document.querySelector('.entries-grid-files');
-                    const newGridFiles = newDoc.querySelector('.entries-grid-files');
-                    if (currentGridFiles && newGridFiles && currentGridFiles.innerHTML !== newGridFiles.innerHTML) {
-                        currentGridFiles.innerHTML = newGridFiles.innerHTML;
-                    }
-                })
-                .catch(error => console.error('Error refreshing content:', error));
-        }
-        // Refresh every 3 seconds
-        setInterval(refreshContent, 3000);
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const evtSource = new EventSource("/api/updates");
+            evtSource.onmessage = function(event) {
+                if (event.data === "content_updated") {
+                    refreshContent();
+                }
+            };
+            // Try reconnection on failure
+            evtSource.onerror = function() {
+                evtSource.close();
+                setTimeout(() => {
+                    new EventSource("/api/updates");
+                }, 3000);
+            };
+            
+            function refreshContent() {
+                fetch(window.location.href).then(response => response.text()).then(html => {
+                        const parser = new DOMParser();
+                        const newDoc = parser.parseFromString(html, 'text/html');
+                        const currentGrid = document.querySelector('.entries-grid');
+                        const newGrid = newDoc.querySelector('.entries-grid');
+                        if (currentGrid && newGrid && currentGrid.innerHTML !== newGrid.innerHTML) {
+                            currentGrid.innerHTML = newGrid.innerHTML;
+                        }
+                        const currentGridFiles = document.querySelector('.entries-grid-files');
+                        const newGridFiles = newDoc.querySelector('.entries-grid-files');
+                        if (currentGridFiles && newGridFiles && currentGridFiles.innerHTML !== newGridFiles.innerHTML) {
+                            currentGridFiles.innerHTML = newGridFiles.innerHTML;
+                        }
+                    }).catch(error => console.error('Error refreshing content:', error)
+                );
+            }
+        });
     </script>
     <script>
         function toggleButtons() {

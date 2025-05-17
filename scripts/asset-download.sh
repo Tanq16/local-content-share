@@ -30,7 +30,7 @@ grep -o "https://fonts.gstatic.com/s/inter/[^)]*" static/css/inter.css | while r
 done
 
 # Update font CSS to use local files
-sed -i.bak 's|https://fonts.gstatic.com/s/inter/|/static/fonts/|g' static/css/inter.css
+sed -i.bak 's|https://fonts.gstatic.com/s/inter/v../|/static/fonts/|g' static/css/inter.css
 rm static/css/inter.css.bak
 
 # Download Highlight.js

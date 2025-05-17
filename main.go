@@ -22,6 +22,12 @@ import (
 //go:embed templates/* static/*
 var content embed.FS
 
+// SSE client management
+var (
+	clients   = make(map[chan string]bool)
+	clientMux sync.Mutex
+)
+
 type Entry struct {
 	ID       string
 	Content  string
@@ -161,6 +167,49 @@ func generateUniqueFilename(baseDir, baseName string) string {
 	}
 }
 
+func handleContentUpdates(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	messageChan := make(chan string)
+	clientMux.Lock()
+	clients[messageChan] = true
+	clientMux.Unlock()
+
+	defer func() {
+		clientMux.Lock()
+		delete(clients, messageChan)
+		clientMux.Unlock()
+		close(messageChan)
+	}()
+	// Send an initial message
+	fmt.Fprintf(w, "data: %s\n\n", "connected")
+	w.(http.Flusher).Flush()
+	for {
+		select {
+		case <-r.Context().Done():
+			return
+		case msg := <-messageChan:
+			fmt.Fprintf(w, "data: %s\n\n", msg)
+			w.(http.Flusher).Flush()
+		}
+	}
+}
+
+func notifyContentChange() {
+	clientMux.Lock()
+	defer clientMux.Unlock()
+
+	for client := range clients {
+		select {
+		case client <- "content_updated":
+		default:
+		}
+	}
+}
+
 func main() {
 	flag.Parse()
 
@@ -242,7 +291,96 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to create static sub-filesystem: %v", err)
 	}
-	http.Handle("/static/", http.FileServer(http.FS(staticFS)))
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticFS))))
+
+	http.HandleFunc("/style.css", func(w http.ResponseWriter, r *http.Request) {
+		file, err := staticFS.Open("style.css")
+		if err != nil {
+			http.Error(w, "Style not found", http.StatusNotFound)
+			return
+		}
+		defer file.Close()
+		w.Header().Set("Content-Type", "text/css")
+		io.Copy(w, file)
+	})
+
+	http.HandleFunc("/manifest.json", func(w http.ResponseWriter, r *http.Request) {
+		file, err := staticFS.Open("manifest.json")
+		if err != nil {
+			http.Error(w, "Manifest not found", http.StatusNotFound)
+			return
+		}
+		defer file.Close()
+		w.Header().Set("Content-Type", "application/json")
+		io.Copy(w, file)
+	})
+
+	http.HandleFunc("/sw.js", func(w http.ResponseWriter, r *http.Request) {
+		file, err := staticFS.Open("sw.js")
+		if err != nil {
+			http.Error(w, "Service worker not found", http.StatusNotFound)
+			return
+		}
+		defer file.Close()
+		w.Header().Set("Content-Type", "application/javascript")
+		io.Copy(w, file)
+	})
+
+	http.HandleFunc("/md.js", func(w http.ResponseWriter, r *http.Request) {
+		file, err := staticFS.Open("md.js")
+		if err != nil {
+			http.Error(w, "JavaScript not found", http.StatusNotFound)
+			return
+		}
+		defer file.Close()
+		w.Header().Set("Content-Type", "application/javascript")
+		io.Copy(w, file)
+	})
+
+	http.HandleFunc("/rtext.js", func(w http.ResponseWriter, r *http.Request) {
+		file, err := staticFS.Open("rtext.js")
+		if err != nil {
+			http.Error(w, "JavaScript not found", http.StatusNotFound)
+			return
+		}
+		defer file.Close()
+		w.Header().Set("Content-Type", "application/javascript")
+		io.Copy(w, file)
+	})
+
+	// Handle favicon and icons
+	http.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		file, err := staticFS.Open("favicon.ico")
+		if err != nil {
+			http.Error(w, "Favicon not found", http.StatusNotFound)
+			return
+		}
+		defer file.Close()
+		w.Header().Set("Content-Type", "image/x-icon")
+		io.Copy(w, file)
+	})
+
+	http.HandleFunc("/icon-192.png", func(w http.ResponseWriter, r *http.Request) {
+		file, err := staticFS.Open("icon-192.png")
+		if err != nil {
+			http.Error(w, "Icon not found", http.StatusNotFound)
+			return
+		}
+		defer file.Close()
+		w.Header().Set("Content-Type", "image/png")
+		io.Copy(w, file)
+	})
+
+	http.HandleFunc("/icon-512.png", func(w http.ResponseWriter, r *http.Request) {
+		file, err := staticFS.Open("icon-512.png")
+		if err != nil {
+			http.Error(w, "Icon not found", http.StatusNotFound)
+			return
+		}
+		defer file.Close()
+		w.Header().Set("Content-Type", "image/png")
+		io.Copy(w, file)
+	})
 
 	// API endpoint to load notepad content
 	http.HandleFunc("/notepad/", func(w http.ResponseWriter, r *http.Request) {
@@ -361,6 +499,7 @@ func main() {
 				}
 			}
 		}
+		notifyContentChange()
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	})
 
@@ -401,8 +540,9 @@ func main() {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		log.Printf("Renamed %s to %s\n", oldPath, newName)
+		notifyContentChange()
 		http.Redirect(w, r, "/", http.StatusSeeOther)
+		log.Printf("Renamed %s to %s\n", oldPath, newName)
 	})
 
 	http.HandleFunc("/raw/", func(w http.ResponseWriter, r *http.Request) {
@@ -542,6 +682,7 @@ func main() {
 		delete(expirationTracker.Expirations, filename)
 		expirationTracker.saveToFile()
 		expirationTracker.mu.Unlock()
+		notifyContentChange()
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		log.Printf("Deleted %s\n", filename)
 	})
@@ -566,9 +707,13 @@ func main() {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		notifyContentChange()
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		log.Printf("Edited %s\n", id)
 	})
+
+	// SSE Updates for content refresh
+	http.HandleFunc("/api/updates", handleContentUpdates)
 
 	// Start server
 	log.Fatal(http.ListenAndServe(*listenAddress, nil))
