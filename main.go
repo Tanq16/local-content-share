@@ -496,9 +496,9 @@ func main() {
 				http.Error(w, "URL content cannot be empty", http.StatusBadRequest)
 				return
 			}
-			_, err := url.ParseRequestURI(content)
-			if err != nil {
-				http.Error(w, "Invalid URL format", http.StatusBadRequest)
+			u, err := url.ParseRequestURI(content)
+			if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
+				http.Error(w, "Invalid URL format. Must start with http:// or https://", http.StatusBadRequest)
 				return
 			}
 			linksFilePath := filepath.Join("data", "links.file")

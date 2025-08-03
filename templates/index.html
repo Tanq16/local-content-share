@@ -59,8 +59,7 @@
             });
         })();
     </script>
-    <!-- TODO: replace with static -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/static/js/tailwindcss.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -163,7 +162,7 @@
                     {{range .}}{{if eq .Type "link"}}
                     <a href="{{.Content}}" target="_blank" rel="noopener noreferrer" class="block bg-base border border-transparent hover:border-surface1 rounded-3xl px-4 py-2 transition-colors duration-300 no-underline group">
                         <div class="flex items-center justify-between">
-                            <div class="font-medium text-base truncate text-text mr-2 group-hover:text-blue transition-colors">{{.Content}}</div>
+                            <div class="font-medium text-base truncate text-text mr-2">{{.Content}}</div>
                             <div class="flex items-center gap-0 sm:gap-1 flex-shrink-0">
                                 <button onclick="event.preventDefault(); event.stopPropagation(); copyToClipboard('{{.Content}}', this)" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Copy"><i class="fas fa-copy"></i></button>
                                 <button onclick="event.preventDefault(); event.stopPropagation(); deleteItem('{{.ID}}')" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Delete"><i class="fas fa-trash"></i></button>

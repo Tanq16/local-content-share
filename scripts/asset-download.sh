@@ -7,6 +7,9 @@ mkdir -p static/fonts
 mkdir -p static/js
 mkdir -p static/css
 
+# Download Tailwind CSS
+curl -sL "https://cdn.tailwindcss.com" -o "static/js/tailwindcss.js"
+
 # Download Font Awesome 6.7.2
 echo "Downloading Font Awesome..."
 curl -sL https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css -o static/fontawesome/css/all.min.css
