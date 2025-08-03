@@ -11,6 +11,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -260,6 +261,9 @@ func main() {
 	if err := os.MkdirAll(filepath.Join("data", "text"), 0755); err != nil {
 		log.Fatal(err)
 	}
+	if err := os.MkdirAll(filepath.Join("data", "links"), 0755); err != nil {
+		log.Fatal(err)
+	}
 	// Create notepad directory
 	if err := os.MkdirAll(filepath.Join("data", "notepad"), 0755); err != nil {
 		log.Fatal(err)
@@ -301,6 +305,7 @@ func main() {
 		expirationTracker.CleanupExpired()
 
 		entries := []Entry{}
+		// Read text snippets
 		textFiles, _ := os.ReadDir(filepath.Join("data", "text"))
 		for _, file := range textFiles {
 			if file.IsDir() {
@@ -317,6 +322,7 @@ func main() {
 				Filename: file.Name(),
 			})
 		}
+		// Read files
 		files, _ := os.ReadDir(filepath.Join("data", "files"))
 		for _, file := range files {
 			if file.IsDir() {
@@ -325,6 +331,23 @@ func main() {
 			entries = append(entries, Entry{
 				ID:       filepath.Join("files", file.Name()),
 				Type:     "file",
+				Filename: file.Name(),
+			})
+		}
+		// Read links
+		linkFiles, _ := os.ReadDir(filepath.Join("data", "links"))
+		for _, file := range linkFiles {
+			if file.IsDir() {
+				continue
+			}
+			data, err := os.ReadFile(filepath.Join("data", "links", file.Name()))
+			if err != nil {
+				continue
+			}
+			entries = append(entries, Entry{
+				ID:       filepath.Join("links", file.Name()),
+				Type:     "link",
+				Content:  string(data),
 				Filename: file.Name(),
 			})
 		}
@@ -483,81 +506,100 @@ func main() {
 	})
 
 	http.HandleFunc("/submit", func(w http.ResponseWriter, r *http.Request) {
-		if err := r.ParseMultipartForm(2 << 28); err != nil { // 256 MB
-			http.Error(w, err.Error(), 500)
+		if err := r.ParseMultipartForm(10 << 20); err != nil { // 10 MB limit for form
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
 		entryType := r.FormValue("type")
 		expiryOption := r.FormValue("expiry")
-		if expiryOption == "" {
-			expiryOption = "Never" // Default to no expiration
-		}
+		content := r.FormValue("content")
+		name := r.FormValue("name")
 
-		switch entryType {
-		case "text":
-			content := r.FormValue("content")
+		if entryType == "link" {
+			// Handle link submission
 			if content == "" {
-				http.Redirect(w, r, "/", http.StatusSeeOther)
+				http.Error(w, "URL content cannot be empty", http.StatusBadRequest)
 				return
 			}
-			filename := r.FormValue("filename")
-			if filename == "" {
-				filename = time.Now().Format("Jan-02 15-04-05")
-			} else {
-				filename = generateUniqueFilename("data/text", filename)
-			}
-			err := os.WriteFile(filepath.Join("data/text", filename), []byte(content), 0644)
+			_, err := url.ParseRequestURI(content)
 			if err != nil {
-				http.Error(w, err.Error(), 500)
+				http.Error(w, "Invalid URL format", http.StatusBadRequest)
 				return
 			}
-			// Set expiration if needed
+			filename := name
+			if filename == "" {
+				filename = time.Now().Format("20060102150405") + ".link"
+			}
+			uniqueFileName := generateUniqueFilename("data/links", filename)
+			err = os.WriteFile(filepath.Join("data/links", uniqueFileName), []byte(content), 0644)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 			if expiryOption != "Never" {
-				fileID := filepath.Join("text", filename)
+				fileID := filepath.Join("links", uniqueFileName)
 				expirationTracker.SetExpiration(fileID, expiryOption)
 			}
-			log.Printf("Saved text snippet to %s with expiry %s\n", filename, expiryOption)
-		case "file":
-			if err := r.ParseMultipartForm(2 << 28); err != nil {
-				http.Error(w, err.Error(), 500)
-				log.Println("Failed to parse multipart form")
-				return
-			}
-			files := r.MultipartForm.File["multifile"]
-			if len(files) == 0 {
-				http.Error(w, "No files uploaded", 400)
-				log.Println("No files uploaded")
-				return
-			}
-			for _, fileHeader := range files {
-				if err := func() error {
-					file, err := fileHeader.Open()
+			log.Printf("Saved link %s with expiry %s\n", uniqueFileName, expiryOption)
+		} else {
+			// Handle file and text submission
+			files := r.MultipartForm.File["file-upload"]
+			if len(files) > 0 {
+				// File submission
+				for _, fileHeader := range files {
+					err := func() error {
+						file, err := fileHeader.Open()
+						if err != nil {
+							return err
+						}
+						defer file.Close()
+
+						fileName := name
+						if fileName == "" {
+							fileName = fileHeader.Filename
+						}
+						uniqueFileName := generateUniqueFilename("data/files", fileName)
+						f, err := os.Create(filepath.Join("data/files", uniqueFileName))
+						if err != nil {
+							return err
+						}
+						defer f.Close()
+						if _, err := io.Copy(f, file); err != nil {
+							return err
+						}
+						if expiryOption != "Never" {
+							fileID := filepath.Join("files", uniqueFileName)
+							expirationTracker.SetExpiration(fileID, expiryOption)
+						}
+						log.Printf("Saved file %s with expiry %s\n", uniqueFileName, expiryOption)
+						return nil
+					}()
 					if err != nil {
-						return fmt.Errorf("failed to open uploaded file: %v", err)
+						http.Error(w, err.Error(), http.StatusInternalServerError)
+						return
 					}
-					defer file.Close()
-					fileName := generateUniqueFilename("data/files", fileHeader.Filename)
-					f, err := os.Create(filepath.Join("data/files", fileName))
-					if err != nil {
-						return fmt.Errorf("failed to create file: %v", err)
-					}
-					defer f.Close()
-					if _, err := io.Copy(f, file); err != nil {
-						return fmt.Errorf("failed to save file: %v", err)
-					}
-					// Set expiration if needed
-					if expiryOption != "Never" {
-						fileID := filepath.Join("files", fileName)
-						expirationTracker.SetExpiration(fileID, expiryOption)
-					}
-					log.Printf("Saved file %s with expiry %s\n", fileName, expiryOption)
-					return nil
-				}(); err != nil {
-					http.Error(w, err.Error(), 500)
+				}
+			} else if content != "" {
+				// Text snippet submission
+				filename := name
+				if filename == "" {
+					filename = time.Now().Format("Jan-02 15-04-05")
+				}
+				uniqueFileName := generateUniqueFilename("data/text", filename)
+				err := os.WriteFile(filepath.Join("data/text", uniqueFileName), []byte(content), 0644)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
+				if expiryOption != "Never" {
+					fileID := filepath.Join("text", uniqueFileName)
+					expirationTracker.SetExpiration(fileID, expiryOption)
+				}
+				log.Printf("Saved text snippet %s with expiry %s\n", uniqueFileName, expiryOption)
 			}
 		}
+
 		notifyContentChange()
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	})
@@ -587,7 +629,7 @@ func main() {
 			// Remove old entry and add new one
 			delete(expirationTracker.Expirations, oldPath)
 			relNewPath := strings.TrimPrefix(newPath, "data/")
-			relNewPath = strings.TrimPrefix(relNewPath, "/")
+			relNewPath = strings.ReplaceAll(relNewPath, "\\", "/") // Ensure cross-platform path separators
 			expirationTracker.Expirations[relNewPath] = expiryTime
 			expirationTracker.saveToFile()
 		}
@@ -661,7 +703,7 @@ func main() {
 		}
 		defer file.Close()
 
-		// Brute force method to determine content type (in practice seems better than content-disposition)
+		// Brute force method to determine content type
 		ext := strings.ToLower(filepath.Ext(filename))
 		var contentType string
 		switch ext {
@@ -675,32 +717,7 @@ func main() {
 			contentType = "image/gif"
 		case ".svg":
 			contentType = "image/svg+xml"
-		case ".mp3":
-			contentType = "audio/mpeg"
-		case ".mp4":
-			contentType = "video/mp4"
-		case ".txt":
-			contentType = "text/plain"
-		case ".html", ".htm":
-			contentType = "text/html"
-		case ".css":
-			contentType = "text/css"
-		case ".js":
-			contentType = "application/javascript"
-		case ".json":
-			contentType = "application/json"
-		case ".xml":
-			contentType = "application/xml"
-		case ".zip":
-			contentType = "application/zip"
-		case ".doc", ".docx":
-			contentType = "application/msword"
-		case ".xls", ".xlsx":
-			contentType = "application/vnd.ms-excel"
-		case ".ppt", ".pptx":
-			contentType = "application/vnd.ms-powerpoint"
 		default:
-			// If not brute forced, detect from first 512 bytes
 			buffer := make([]byte, 512)
 			_, err = file.Read(buffer)
 			if err != nil && err != io.EOF {
@@ -719,7 +736,7 @@ func main() {
 		w.Header().Set("Content-Type", contentType)
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", baseFilename))
 		w.Header().Set("Content-Length", fmt.Sprintf("%d", fileInfo.Size()))
-		w.Header().Set("X-Content-Type-Options", "nosniff") // Prevent MIME sniffing: adding as best practice
+		w.Header().Set("X-Content-Type-Options", "nosniff")
 		_, err = io.Copy(w, file)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -735,14 +752,25 @@ func main() {
 	})
 
 	http.HandleFunc("/delete/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "POST" {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
 		filename := strings.TrimPrefix(r.URL.Path, "/delete/")
-		os.Remove(filepath.Join("data", filename))
+		err := os.Remove(filepath.Join("data", filename))
+		if err != nil {
+			log.Printf("Failed to delete %s: %v", filename, err)
+			http.Error(w, "Failed to delete file", http.StatusInternalServerError)
+			return
+		}
 		expirationTracker.mu.Lock()
 		delete(expirationTracker.Expirations, filename)
 		expirationTracker.saveToFile()
 		expirationTracker.mu.Unlock()
 		notifyContentChange()
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status": "ok"}`))
 		log.Printf("Deleted %s\n", filename)
 	})
 

@@ -3,14 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Local-Content-Share</title>
-    <link rel="stylesheet" href="/style.css">
+    <title>Local Content Share</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link href="/static/css/inter.css" rel="stylesheet">
-    <link rel="stylesheet" href="/static/fontawesome/css/all.min.css">
     
     <!-- PWA Meta Tags -->
-    <meta name="theme-color" content="#7C3AED">
+    <meta name="theme-color" content="#8839ef"> <!-- mauve -->
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/icon-192.png">
     <meta name="mobile-web-app-capable" content="yes">
@@ -18,8 +20,201 @@
     <meta name="apple-mobile-web-app-title" content="ContentShare">
     <meta name="format-detection" content="telephone=no">
 
-    <!-- PWA Script -->
+    <style>
+        :root { /* Catppuccin Latte (Light Theme) */
+            --rosewater: #dc8a78; --flamingo: #dd7878; --pink: #ea76cb;
+            --mauve: #8839ef; --red: #d20f39; --maroon: #e64553;
+            --peach: #fe640b; --yellow: #df8e1d; --green: #40a02b;
+            --teal: #179299; --sky: #04a5e5; --sapphire: #209fb5;
+            --blue: #1e66f5; --lavender: #7287fd; --text: #4c4f69;
+            --subtext1: #5c5f77; --subtext0: #6c6f85; --overlay2: #7c7f93;
+            --overlay1: #8c8fa1; --overlay0: #9ca0b0; --surface2: #acb0be;
+            --surface1: #bcc0cc; --surface0: #ccd0da; --base: #eff1f5;
+            --mantle: #e6e9ef; --crust: #dce0e8;
+        }
+
+        html.dark { /* Catppuccin Mocha (Dark Theme) */
+            --rosewater: #f5e0dc; --flamingo: #f2cdcd; --pink: #f5c2e7;
+            --mauve: #cba6f7; --red: #f38ba8; --maroon: #eba0ac;
+            --peach: #fab387; --yellow: #f9e2af; --green: #a6e3a1;
+            --teal: #94e2d5; --sky: #89dceb; --sapphire: #74c7ec;
+            --blue: #89b4fa; --lavender: #b4befe; --text: #cdd6f4;
+            --subtext1: #bac2de; --subtext0: #a6adc8; --overlay2: #9399b2;
+            --overlay1: #7f849c; --overlay0: #6c7086; --surface2: #585b70;
+            --surface1: #45475a; --surface0: #313244; --base: #1e1e2e;
+            --mantle: #181825; --crust: #11111b;
+        }
+    </style>
     <script>
+        // Immediately apply theme to prevent FOUC
+        (function() {
+            function applyTheme(theme) {
+                if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            }
+            const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+            applyTheme(mediaQuery.matches ? 'dark' : 'light');
+            mediaQuery.addEventListener('change', (e) => {
+                applyTheme(e.matches ? 'dark' : 'light');
+            });
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    borderRadius: {
+                        '4xl': '2rem',
+                    },
+                    colors: {
+                        'rosewater': 'var(--rosewater)', 'flamingo': 'var(--flamingo)',
+                        'pink': 'var(--pink)', 'mauve': 'var(--mauve)',
+                        'red': 'var(--red)', 'maroon': 'var(--maroon)',
+                        'peach': 'var(--peach)', 'yellow': 'var(--yellow)',
+                        'green': 'var(--green)', 'teal': 'var(--teal)',
+                        'sky': 'var(--sky)', 'sapphire': 'var(--sapphire)',
+                        'blue': 'var(--blue)', 'lavender': 'var(--lavender)',
+                        'text': 'var(--text)', 'subtext1': 'var(--subtext1)',
+                        'subtext0': 'var(--subtext0)', 'overlay2': 'var(--overlay2)',
+                        'overlay1': 'var(--overlay1)', 'overlay0': 'var(--overlay0)',
+                        'surface2': 'var(--surface2)', 'surface1': 'var(--surface1)',
+                        'surface0': 'var(--surface0)', 'base': 'var(--base)',
+                        'mantle': 'var(--mantle)', 'crust': 'var(--crust)',
+                    }
+                }
+            }
+        }
+    </script>
+    </style>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-crust text-text antialiased transition-colors duration-300">
+
+    <div class="container mx-auto max-w-6xl p-4 sm:p-6 lg:p-8">
+
+        <header class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold text-mauve">Local-Content-Share</h1>
+        </header>
+
+        <main class="flex flex-col gap-8">
+            <section class="w-full">
+                <div class="flex flex-wrap items-center justify-center gap-3 mb-4">
+                    <button type="button" class="flex items-center gap-2 px-4 py-2 bg-base hover:bg-surface0 rounded-xl cursor-pointer transition-colors">
+                        <i class="fas fa-link text-subtext0"></i>
+                        <span class="font-medium text-sm text-subtext0">Link</span>
+                    </button>
+                    <button type="button" id="new-button" class="flex items-center gap-2 px-4 py-2 bg-base hover:bg-surface0 rounded-xl cursor-pointer transition-colors">
+                        <i class="fas fa-pen-nib text-subtext0"></i>
+                        <span class="font-medium text-sm text-subtext0">New</span>
+                    </button>
+                    <a href="/md" class="flex items-center gap-2 px-4 py-2 bg-base hover:bg-surface0 rounded-xl transition-colors no-underline">
+                        <i class="fas fa-note-sticky text-subtext0"></i>
+                        <span class="font-medium text-sm text-subtext0">Notepad</span>
+                    </a>
+                </div>
+            </section>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Snippets Section -->
+                <section class="content-section">
+                    <h2 class="text-2xl font-semibold mb-4 text-center text-text">Snippets</h2>
+                    <div id="snippets-list" class="flex flex-col gap-2">
+                        {{range .}}{{if eq .Type "text"}}
+                        <div class="flex items-center justify-between bg-base border border-transparent hover:border-surface1 rounded-3xl px-4 py-2 transition-colors duration-300 relative" onclick="window.location.href='/show/{{.ID}}';">
+                            <div class="font-medium text-base truncate text-text mr-2 cursor-pointer">{{.Filename}}</div>
+                            <div class="flex items-center gap-0 sm:gap-1 flex-shrink-0">
+                                <button onclick="event.stopPropagation(); showRenamePrompt('{{.ID}}')" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Rename"><i class="fas fa-i-cursor"></i></button>
+                                <button onclick="event.stopPropagation(); showEditForm('{{.ID}}', '{{.Filename}}')" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Edit"><i class="fas fa-pen"></i></button>
+                                <button onclick="event.stopPropagation(); copyToClipboard('{{.Content}}', this)" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Copy"><i class="fas fa-copy"></i></button>
+                                <a href="/delete/{{.ID}}" onclick="event.stopPropagation(); return confirm('Are you sure you want to delete this snippet?');" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors no-underline" title="Delete"><i class="fas fa-trash"></i></a>
+                            </div>
+                        </div>
+                        {{end}}{{end}}
+                    </div>
+                </section>
+
+                <!-- Files Section -->
+                <section class="content-section">
+                    <h2 class="text-2xl font-semibold mb-4 text-center text-text">Files</h2>
+                    <div id="files-list" class="flex flex-col gap-2">
+                        {{range .}}{{if eq .Type "file"}}
+                        <div class="flex items-center justify-between bg-base border border-transparent hover:border-surface1 rounded-3xl px-4 py-2 transition-colors duration-300">
+                            <div class="font-medium text-base truncate text-text mr-2">{{.Filename}}</div>
+                            <div class="flex items-center gap-0 sm:gap-1 flex-shrink-0">
+                                <button onclick="event.stopPropagation(); showRenamePrompt('{{.ID}}')" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Rename"><i class="fas fa-i-cursor"></i></button>
+                                <a href="/download/{{.ID}}" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors no-underline" title="Download"><i class="fas fa-download"></i></a>
+                                <a href="/view/{{.ID}}" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors no-underline" title="View"><i class="fas fa-eye"></i></a>
+                                <a href="/delete/{{.ID}}" onclick="return confirm('Are you sure you want to delete this file?');" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors no-underline" title="Delete"><i class="fas fa-trash"></i></a>
+                            </div>
+                        </div>
+                        {{end}}{{end}}
+                    </div>
+                </section>
+            </div>
+
+            <!-- Links Section -->
+            <section class="content-section">
+                <h2 class="text-2xl font-semibold mb-4 text-center text-text">Links</h2>
+                <div id="links-list" class="flex flex-col gap-2">
+                    {{range .}}{{if eq .Type "link"}}
+                    <div class="flex items-center justify-between bg-base border border-transparent hover:border-surface1 rounded-3xl px-4 py-2 transition-colors duration-300">
+                        <div class="font-medium text-base truncate text-text mr-2">{{.Content}}</div>
+                        <div class="flex items-center gap-0 sm:gap-1 flex-shrink-0">
+                            <button onclick="copyToClipboard('{{.Content}}', this)" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Copy"><i class="fas fa-copy"></i></button>
+                            <a href="/delete/{{.ID}}" onclick="return confirm('Are you sure you want to delete this link?');" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors no-underline" title="Delete"><i class="fas fa-trash"></i></a>
+                        </div>
+                    </div>
+                    {{end}}{{end}}
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal -->
+    <div id="new-item-modal" class="hidden fixed inset-0 bg-overlay2/70 dark:bg-black/70 flex items-center justify-center max-w-full p-4 z-50">
+        <div id="modal-backdrop" class="absolute inset-0"></div>
+        <div class="bg-crust rounded-3xl p-4 w-full max-w-lg z-10">
+            <form id="new-item-form" action="/submit" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="expiry" id="expiryValue" value="Never">
+                <div class="mb-4">
+                    <label for="file-upload" class="flex flex-col items-center justify-center w-full h-24 border-2 border-surface0 border-dashed rounded-2xl cursor-pointer bg-base hover:bg-surface0">
+                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                            <i class="fas fa-cloud-upload-alt text-3xl text-overlay2 mb-1"></i>
+                            <p class="text-xs text-overlay2"><span class="font-semibold">Click to upload</span> or drag and drop</p>
+                            <p id="file-name-display" class="text-xs text-blue mt-1"></p>
+                        </div>
+                        <input id="file-upload" name="file-upload" type="file" class="hidden" />
+                    </label>
+                </div>
+                <div class="mb-4">
+                     <input type="text" name="name" placeholder="Name (optional)" class="w-full bg-base px-4 py-3 text-text placeholder-overlay1 focus:outline-none rounded-2xl">
+                </div>
+                <div>
+                    <textarea name="content" placeholder="Content (optional, URL for links)" rows="4" class="w-full bg-base px-4 py-3 text-text placeholder-overlay1 focus:outline-none resize-y rounded-2xl"></textarea>
+                </div>
+                <div class="grid grid-cols-3 gap-3 mt-6">
+                    <button type="button" id="expiry-button" class="flex items-center justify-center gap-2 py-2 bg-base hover:bg-surface0 rounded-xl cursor-pointer transition-colors">
+                        <i class="fas fa-clock text-subtext0"></i>
+                        <span id="expiry-text" class="font-medium text-sm text-subtext0">Never</span>
+                    </button>
+                    <button type="button" id="cancel-button" class="py-2 bg-base hover:bg-surface0 text-subtext0 rounded-xl transition-colors font-medium text-sm">Cancel</button>
+                    <button type="submit" class="py-2 bg-blue hover:bg-sapphire text-crust font-semibold rounded-xl transition-colors text-sm">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // PWA Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js')
@@ -32,6 +227,62 @@
             });
         }
         
+        // Modal handling
+        const newButton = document.getElementById('new-button');
+        const cancelButton = document.getElementById('cancel-button');
+        const modal = document.getElementById('new-item-modal');
+        const modalBackdrop = document.getElementById('modal-backdrop');
+
+        newButton.addEventListener('click', () => modal.classList.remove('hidden'));
+        cancelButton.addEventListener('click', () => modal.classList.add('hidden'));
+        modalBackdrop.addEventListener('click', () => modal.classList.add('hidden'));
+        
+        // File upload display name
+        document.getElementById('file-upload').addEventListener('change', function() {
+            const fileNameDisplay = document.getElementById('file-name-display');
+            if (this.files.length > 0) {
+                fileNameDisplay.textContent = `Selected: ${this.files[0].name}`;
+            } else {
+                fileNameDisplay.textContent = '';
+            }
+        });
+
+        // Expiry cycle logic
+        let expiryOptions = ["Never", "1 hour", "4 hours", "1 day", "Custom"];
+        const expiryButton = document.getElementById('expiry-button');
+        const expiryText = document.getElementById('expiry-text');
+        const expiryValueInput = document.getElementById('expiryValue');
+
+        expiryButton.addEventListener('click', () => {
+            const currentText = expiryText.innerText;
+            const currentIndex = expiryOptions.indexOf(currentText);
+            const nextIndex = (currentIndex + 1) % expiryOptions.length;
+            const newValue = expiryOptions[nextIndex];
+            
+            if (newValue === "Custom") {
+                const customValue = prompt("Enter a custom expiration time (e.g., 1h, 30m, 2d, 1w, 1M, 1y):");
+                if (customValue) {
+                    expiryText.innerText = customValue;
+                    expiryValueInput.value = customValue;
+                }
+            } else {
+                expiryText.innerText = newValue;
+                expiryValueInput.value = newValue;
+            }
+        });
+
+        // Fetch expiry options from backend on load
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/getExpiryOptions').then(response => response.json()).then(options => {
+                if (options && options.length > 0) {
+                    expiryOptions = options;
+                    expiryText.innerText = expiryOptions[0];
+                    expiryValueInput.value = expiryOptions[0];
+                }
+            }).catch(error => console.error('Error fetching expiry options:', error));
+        });
+
+        // Rename prompt function
         function showRenamePrompt(id) {
             const newName = prompt('Enter new name:');
             if (newName) {
@@ -49,344 +300,79 @@
                 form.submit();
             }
         }
-    </script>
-</head>
-<body>
-    <div class="container">
-        <header>
-            <h1>Local-Content-Share</h1>
-        </header>
 
-        <main>
-            <section class="input-section">
-                <!-- Input Section Buttons -->
-                <div class="buttons-container">
-                    <!-- File Upload Form -->
-                    <form action="/submit" method="POST" enctype="multipart/form-data" id="fileForm" class="file-upload-form" style="margin-bottom: 0;">
-                        <input type="hidden" name="type" value="file">
-                        <input type="hidden" name="expiry" id="fileExpiryValue" value="Never">
-                        <label class="btn-icon" title="Upload files" id="uploadButton">
-                            <i class="fas fa-cloud-upload-alt"></i>
-                            <span class="upload-text">Upload</span>
-                            <input type="file" name="multifile" multiple onChange="handleFileSelect(event)">
-                        </label>
-                    </form>
-                    
-                    <!-- Text Submit Button (initially hidden) -->
-                    <button type="button" class="btn-icon" title="Submit text" id="submitTextButton" onclick="submitTextForm()" style="display: none;">
-                        <i class="fas fa-paper-plane"></i>
-                        <span class="upload-text">Submit</span>
-                    </button>
-                    
-                    <!-- Expiry Time Button -->
-                    <button type="button" class="btn-icon" title="Set expiry time" id="expiryButton" onclick="cycleExpiryTime()">
-                        <i class="fas fa-clock"></i>
-                        <span class="upload-text" id="expiryText">Never</span>
-                    </button>
-
-                    <!-- Notepad Button -->
-                    <a href="/md" class="btn-icon" title="Open Notepad" style="text-decoration: none; display: inline-flex;">
-                        <i class="fas fa-edit"></i>
-                        <span class="upload-text">Notepad</span>
-                    </a>
-                </div>
-
-                <!-- Progress Bar Container (initially hidden) -->
-                <div id="progress-container" style="display: none; width: 100%; margin-bottom: 15px;">
-                    <div style="text-align: center; margin-bottom: 5px;">
-                        <span id="progress-text">Uploading... 0%</span>
-                    </div>
-                    <div style="background-color: var(--bg-tertiary); border-radius: 10px; height: 5px; overflow: hidden;">
-                        <div id="progress-bar" style="background: linear-gradient(135deg, var(--primary), var(--secondary)); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
-                    </div>
-                </div>
-
-                <!-- Text Content Form -->
-                <div class="compose-card" id="dropZone" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragleave="handleDragLeave(event)" ondragenter="handleDragEnter(event)">
-                    <form action="/submit" method="POST" enctype="multipart/form-data" id="textForm">
-                        <input type="hidden" name="type" value="text">
-                        <input type="hidden" name="expiry" id="textExpiryValue" value="Never">
-                        <input type="text" name="filename" placeholder="Name (defaults to date string)" class="filename-input">
-                        <textarea name="content" placeholder="Add text snippets to store or share, or drag and drop files here!" rows="4" id="contentTextarea" oninput="toggleButtons()"></textarea>
-                    </form>
-                </div>
-            </section>
-
-            <div class="content-sections">
-                <!-- Text Snippets Section -->
-                <section class="content-section">
-                    <h2 class="section-title">Snippets</h2>
-                    <div class="entries-grid">
-                        {{range .}}
-                            {{if eq .Type "text"}}
-                            <div class="entry-card" style="position: relative; cursor: pointer;">
-                                <!-- Clickable overlay covering the whole card except the buttons -->
-                                <a href="/show/{{.ID}}" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1;"></a>
-                                <div class="entry-content">{{.Filename}}</div>
-                                <div class="entry-actions">
-                                    <button onclick="event.preventDefault(); showRenamePrompt('{{.ID}}')" class="btn-icon-small" title="Rename" style="position: relative; z-index: 2;">
-                                        <i class="fas fa-i-cursor"></i>
-                                    </button>
-                                    <button onclick="event.preventDefault(); showEditForm('{{.ID}}')" class="btn-icon-small" title="Edit" style="position: relative; z-index: 2;">
-                                        <i class="fas fa-pen"></i>
-                                    </button>
-                                    <a href="/show/{{.ID}}" class="btn-icon-small" title="Show" style="position: relative; z-index: 2;">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a href="/delete/{{.ID}}" class="btn-icon-small" title="Delete" style="position: relative; z-index: 2;">
-                                        <i class="fas fa-trash"></i>
-                                    </a>
-                                </div>
-                            </div>
-                            {{end}}
-                        {{end}}
-                    </div>
-                </section>
-            
-                <!-- Files Section -->
-                <section class="content-section">
-                    <h2 class="section-title">Files</h2>
-                    <div class="entries-grid-files">
-                        {{range .}}
-                            {{if eq .Type "file"}}
-                            <div class="entry-card" style="position: relative; cursor: pointer;">
-                                <!-- Clickable overlay covering the whole card except the buttons -->
-                                <a href="/view/{{.ID}}" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1;"></a>
-                                <div class="entry-content">{{.Filename}}</div>
-                                <div class="entry-actions">
-                                    <button onclick="event.preventDefault(); showRenamePrompt('{{.ID}}')" class="btn-icon-small" title="Rename" style="position: relative; z-index: 2;">
-                                        <i class="fas fa-i-cursor"></i>
-                                    </button>
-                                    <a href="/download/{{.ID}}" class="btn-icon-small" title="Download" style="position: relative; z-index: 2;">
-                                        <i class="fas fa-download"></i>
-                                    </a>
-                                    <a href="/view/{{.ID}}" class="btn-icon-small" title="View" style="position: relative; z-index: 2;">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a href="/delete/{{.ID}}" class="btn-icon-small" title="Delete" style="position: relative; z-index: 2;">
-                                        <i class="fas fa-trash"></i>
-                                    </a>
-                                </div>
-                            </div>
-                            {{end}}
-                        {{end}}
-                    </div>
-                </section>
-            </div>
-        </main>
-    </div>
-    <script>
-        function handleDragOver(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            document.getElementById('dropZone').classList.add('drag-over');
-        }
-        function handleDragEnter(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-        function handleDragLeave(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            document.getElementById('dropZone').classList.remove('drag-over');
-        }
-        function handleDrop(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            document.getElementById('dropZone').classList.remove('drag-over');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                if (handleCustomExpiry()) {
-                    uploadFiles(files);
-                }
-            }
-        }
-        function handleFileSelect(event) {
-            const files = event.target.files;
-            if (files.length > 0) {
-                if (handleCustomExpiry()) {
-                    uploadFiles(files);
-                }
-            }
-        }
-        
-        // Handle custom expiry selection
-        function handleCustomExpiry() {
-            const currentExpiry = document.getElementById('expiryText').innerText;
-            
-            if (currentExpiry === "Custom") {
-                const customValue = prompt("Enter a custom expiration time (e.g., 1h, 30m, 2d, 1w, 1M, 1y):");
-                if (!customValue) {
-                    // User cancelled, revert to "Never"
-                    document.getElementById('expiryText').innerText = "Never";
-                    document.getElementById('textExpiryValue').value = "Never";
-                    document.getElementById('fileExpiryValue').value = "Never";
-                    return false;
-                }
-                document.getElementById('textExpiryValue').value = customValue;
-                document.getElementById('fileExpiryValue').value = customValue;
-                return true;
-            }
-            // Pre-defined expiration
-            document.getElementById('textExpiryValue').value = currentExpiry;
-            document.getElementById('fileExpiryValue').value = currentExpiry;
-            return true;
-        }
-        
-        function uploadFiles(files) {
-            const formData = new FormData();
-            formData.append('type', 'file');
-            formData.append('expiry', document.getElementById('fileExpiryValue').value);
-            
-            for (let i = 0; i < files.length; i++) {
-                formData.append('multifile', files[i]);
-            }
-            const progressContainer = document.getElementById('progress-container');
-            const progressBar = document.getElementById('progress-bar');
-            const progressText = document.getElementById('progress-text');
-            progressContainer.style.display = 'block';
-            progressBar.style.width = '0%';
-            progressText.innerText = 'Uploading... 0%';
-            
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', '/submit', true);
-            xhr.upload.onprogress = function(e) {
-                if (e.lengthComputable) {
-                    const percentComplete = Math.round((e.loaded / e.total) * 100);
-                    progressBar.style.width = percentComplete + '%';
-                    progressText.innerText = `Uploading... ${percentComplete}%`;
-                }
-            };
-            xhr.onload = function() {
-                if (xhr.status === 200 || xhr.status === 303) {
-                    progressText.innerText = 'Upload complete!';
-                    progressBar.style.width = '100%';
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 500);
-                } else {
-                    progressText.innerText = 'Upload failed!';
-                }
-            };
-            xhr.onerror = function() {
-                progressText.innerText = 'Upload failed!';
-            };
-            xhr.send(formData);
-        }
-    </script>
-    <script>
-        async function showEditForm(id) {
+        // Edit form logic
+        async function showEditForm(id, filename) {
             const response = await fetch(`/raw/${id}`);
             const content = await response.text();
-            // Replace the compose card with the edit form
-            const modal = document.createElement('div');
-            modal.className = 'compose-card';
-            modal.innerHTML = `
-                <form action="/edit/${id}" method="POST">
-                    <input type="text" class="filename-input" value="Editing: ${id.split('/').pop()}" disabled>
-                    <textarea 
-                        name="content" 
-                        class="w-full bg-[#374151] border-2 border-transparent rounded-2xl p-5 text-gray-200 font-medium transition-all focus:outline-none focus:border-purple-700 min-h-[120px]"
-                        style="resize: vertical;"
-                    >${content}</textarea>
-                    <div class="actions-wrapper">
-                        <button type="button" onclick="window.location.reload()" class="btn-icon btn-secondary" title="Cancel">
-                            <i class="fas fa-times"></i>
-                        </button>
-                        <button type="submit" class="btn-icon-small" title="Save">
-                            <i class="fas fa-check"></i>
-                        </button>
-                    </div>
-                </form>
-            `;
-            const composeCard = document.querySelector('.compose-card');
-            composeCard.replaceWith(modal);
-            // Set focus on textarea
-            modal.querySelector('textarea').focus();
+            
+            // Populate and show the modal for editing
+            const form = document.getElementById('new-item-form');
+            form.action = `/edit/${id}`;
+            form.querySelector('[name="name"]').value = filename;
+            form.querySelector('[name="name"]').disabled = true; // Don't allow renaming here
+            form.querySelector('[name="content"]').value = content;
+            form.querySelector('[name="file-upload"]').parentElement.parentElement.style.display = 'none'; // Hide file upload
+            
+            modal.classList.remove('hidden');
+            
+            // Reset form on cancel
+            const onCancel = () => {
+                form.action = '/submit';
+                form.reset();
+                form.querySelector('[name="name"]').disabled = false;
+                form.querySelector('[name="file-upload"]').parentElement.parentElement.style.display = 'block';
+                cancelButton.removeEventListener('click', onCancel);
+            };
+            cancelButton.addEventListener('click', onCancel, { once: true });
         }
-    </script>
-    <script>
+
+        // Copy to clipboard function
+        function copyToClipboard(text, buttonElement) {
+            if (!navigator.clipboard) {
+                // Fallback for older browsers
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showCopyFeedback(buttonElement);
+                } catch (err) {
+                    console.error('Fallback: Oops, unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+                return;
+            }
+            navigator.clipboard.writeText(text).then(function() {
+                showCopyFeedback(buttonElement);
+            }, function(err) {
+                console.error('Async: Could not copy text: ', err);
+            });
+        }
+
+        function showCopyFeedback(buttonElement) {
+            const originalIcon = buttonElement.innerHTML;
+            buttonElement.innerHTML = '<i class="fas fa-check text-green"></i>';
+            setTimeout(() => {
+                buttonElement.innerHTML = originalIcon;
+            }, 2000);
+        }
+        
+        // SSE for live updates
         document.addEventListener('DOMContentLoaded', function() {
             const evtSource = new EventSource("/api/updates");
             evtSource.onmessage = function(event) {
                 if (event.data === "content_updated") {
-                    refreshContent();
+                    window.location.reload(); // just reload
                 }
             };
-            // Try reconnection on failure
             evtSource.onerror = function() {
+                console.log("SSE connection error. Reconnecting...");
                 evtSource.close();
-                setTimeout(() => {
-                    new EventSource("/api/updates");
-                }, 3000);
+                setTimeout(() => new EventSource("/api/updates"), 3000);
             };
-            
-            function refreshContent() {
-                fetch(window.location.href).then(response => response.text()).then(html => {
-                        const parser = new DOMParser();
-                        const newDoc = parser.parseFromString(html, 'text/html');
-                        const currentGrid = document.querySelector('.entries-grid');
-                        const newGrid = newDoc.querySelector('.entries-grid');
-                        if (currentGrid && newGrid && currentGrid.innerHTML !== newGrid.innerHTML) {
-                            currentGrid.innerHTML = newGrid.innerHTML;
-                        }
-                        const currentGridFiles = document.querySelector('.entries-grid-files');
-                        const newGridFiles = newDoc.querySelector('.entries-grid-files');
-                        if (currentGridFiles && newGridFiles && currentGridFiles.innerHTML !== newGridFiles.innerHTML) {
-                            currentGridFiles.innerHTML = newGridFiles.innerHTML;
-                        }
-                    }).catch(error => console.error('Error refreshing content:', error)
-                );
-            }
-        });
-    </script>
-    <script>
-        function toggleButtons() {
-            const textareaContent = document.getElementById('contentTextarea').value;
-            const uploadButton = document.getElementById('uploadButton').parentElement;
-            const submitTextButton = document.getElementById('submitTextButton');
-            
-            if (textareaContent.trim() !== '') {
-                // If textarea has content, hide upload button and show submit button
-                uploadButton.style.display = 'none';
-                submitTextButton.style.display = 'inline-flex';
-            } else {
-                // If textarea is empty, show upload button and hide submit button
-                uploadButton.style.display = 'inline-flex';
-                submitTextButton.style.display = 'none';
-            }
-        }
-
-        let expiryOptions = ["Never", "1 hour", "4 hours", "1 day", "Custom"];
-        function cycleExpiryTime() {
-            const currentText = document.getElementById('expiryText').innerText;
-            const currentIndex = expiryOptions.indexOf(currentText);
-            const nextIndex = (currentIndex + 1) % expiryOptions.length;
-            const newValue = expiryOptions[nextIndex];
-            document.getElementById('expiryText').innerText = newValue;
-            // Update both expiry value fields to keep in sync
-            document.getElementById('textExpiryValue').value = newValue;
-            document.getElementById('fileExpiryValue').value = newValue;
-        }
-        
-        // Submit text form with custom expiry handling
-        function submitTextForm() {
-            if (handleCustomExpiry()) {
-                document.getElementById('textForm').submit();
-            }
-        }
-        
-        // Initialize the button states when the page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            toggleButtons();
-            fetch('/getExpiryOptions').then(response => response.json()).then(options => {
-                expiryOptions = options;
-                if (expiryOptions.length > 0) {
-                    document.getElementById('expiryText').innerText = expiryOptions[0];
-                    document.getElementById('textExpiryValue').value = expiryOptions[0];
-                    document.getElementById('fileExpiryValue').value = expiryOptions[0];
-                }
-            }).catch(error => console.error('Error fetching expiry options:', error));
         });
     </script>
 </body>
