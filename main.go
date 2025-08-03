@@ -188,9 +188,6 @@ function example() {
 }
 ` + "```"
 
-// const rtextPlaceholder = `<h1>Welcome to Rich Text Notepad</h1>
-// <p>Start typing here to create your document. Use the toolbar above to format your text.</p>`
-
 func generateUniqueFilename(baseDir, baseName string) string {
 	// Sanitize: allow only letters (+unicode), numbers, space, dot, hyphen, underscore, () and []
 	reg := regexp.MustCompile(`[^\p{L}\p{N}\p{M}\s\.\-_()\[\]]`)
@@ -328,16 +325,16 @@ func main() {
 		data, err := os.ReadFile(filepath.Join("data", "links.file"))
 		if err == nil {
 			lines := strings.Split(strings.TrimSpace(string(data)), "\n")
-			for i, line := range lines {
+			for _, line := range lines {
 				line = strings.TrimSpace(line)
 				if line == "" {
 					continue
 				}
 				entries = append(entries, Entry{
-					ID:       fmt.Sprintf("links/line_%d", i+1),
+					ID:       "link/" + url.QueryEscape(line),
 					Type:     "link",
 					Content:  line,
-					Filename: fmt.Sprintf("line_%d", i+1),
+					Filename: line,
 				})
 			}
 		}
@@ -505,18 +502,13 @@ func main() {
 				return
 			}
 			linksFilePath := filepath.Join("data", "links.file")
-			var existingContent string
-			if data, err := os.ReadFile(linksFilePath); err == nil {
-				existingContent = string(data)
-			}
-			var newContent string
-			if name != "" {
-				newContent = content + "\n" + existingContent
-			} else {
-				newContent = content + "\n" + existingContent
-			}
-			err = os.WriteFile(linksFilePath, []byte(newContent), 0644)
+			f, err := os.OpenFile(linksFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			defer f.Close()
+			if _, err := f.WriteString(content + "\n"); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
@@ -704,26 +696,65 @@ func main() {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
-		filename := strings.TrimPrefix(r.URL.Path, "/delete/")
-		if _, err := url.ParseRequestURI(filename); err == nil {
-			// Delete link
-			// read file, remove line, rewrite file.
+		id := strings.TrimPrefix(r.URL.Path, "/delete/")
+		// Handle link deletion
+		if strings.HasPrefix(id, "link/") {
+			linkToDelete, err := url.QueryUnescape(strings.TrimPrefix(id, "link/"))
+			if err != nil {
+				http.Error(w, "Invalid link format for deletion", http.StatusBadRequest)
+				return
+			}
+			linksFilePath := filepath.Join("data", "links.file")
+			data, err := os.ReadFile(linksFilePath)
+			if err != nil {
+				http.Error(w, "Failed to read links file for deletion", http.StatusInternalServerError)
+				return
+			}
+			lines := strings.Split(string(data), "\n")
+			var newLines []string
+			var found bool
+			for _, line := range lines {
+				if strings.TrimSpace(line) == strings.TrimSpace(linkToDelete) && !found {
+					found = true // Remove only the first occurrence
+					continue
+				}
+				if strings.TrimSpace(line) != "" {
+					newLines = append(newLines, line)
+				}
+			}
+			output := strings.Join(newLines, "\n")
+			// Add newline for correctness
+			if output != "" {
+				output += "\n"
+			}
+			err = os.WriteFile(linksFilePath, []byte(output), 0644)
+			if err != nil {
+				http.Error(w, "Failed to write links file after deletion", http.StatusInternalServerError)
+				return
+			}
+			notifyContentChange()
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{"status": "ok"}`))
+			log.Printf("Deleted link %s\n", linkToDelete)
+			return
 		}
-		err := os.Remove(filepath.Join("data", filename))
+		// Handle file and snippet deletion
+		err := os.Remove(filepath.Join("data", id))
 		if err != nil {
-			log.Printf("Failed to delete %s: %v", filename, err)
+			log.Printf("Failed to delete %s: %v", id, err)
 			http.Error(w, "Failed to delete file", http.StatusInternalServerError)
 			return
 		}
 		expirationTracker.mu.Lock()
-		delete(expirationTracker.Expirations, filename)
+		delete(expirationTracker.Expirations, id)
 		expirationTracker.saveToFile()
 		expirationTracker.mu.Unlock()
 		notifyContentChange()
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status": "ok"}`))
-		log.Printf("Deleted %s\n", filename)
+		log.Printf("Deleted %s\n", id)
 	})
 
 	http.HandleFunc("/edit/", func(w http.ResponseWriter, r *http.Request) {
@@ -760,6 +791,12 @@ func main() {
 
 // Helper function to create files if they don't exist
 func createFileIfNotExists(filename string, defaultContent string) {
+	dir := filepath.Dir(filepath.Join("data", filename))
+	if dir != "." && dir != "data" {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			log.Printf("Error creating directory %s: %v\n", dir, err)
+		}
+	}
 	filePath := filepath.Join("data", filename)
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		err := os.WriteFile(filePath, []byte(defaultContent), 0644)

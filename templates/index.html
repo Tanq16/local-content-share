@@ -105,7 +105,7 @@
         <main class="flex flex-col gap-8">
             <section class="w-full">
                 <div class="flex flex-wrap items-center justify-center gap-3 mb-4">
-                    <button type="button" class="flex items-center gap-2 px-4 py-2 bg-base hover:bg-surface0 rounded-xl cursor-pointer transition-colors">
+                    <button id="new-link-button" type="button" class="flex items-center gap-2 px-4 py-2 bg-base hover:bg-surface0 rounded-xl cursor-pointer transition-colors">
                         <i class="fas fa-link text-subtext0"></i>
                         <span class="font-medium text-sm text-subtext0">Link</span>
                     </button>
@@ -148,7 +148,7 @@
                         <div class="flex items-center gap-0 sm:gap-1 flex-shrink-0">
                             <button onclick="event.stopPropagation(); showRenameModal('{{.ID}}', '{{.Filename}}')" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Rename"><i class="fas fa-i-cursor"></i></button>
                             <a href="/download/{{.ID}}" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors no-underline" title="Download"><i class="fas fa-download"></i></a>
-                            <a href="/view/{{.ID}}" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors no-underline" title="View"><i class="fas fa-eye"></i></a>
+                            <a href="/view/{{.ID}}" target="_blank" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors no-underline" title="View"><i class="fas fa-eye"></i></a>
                             <button onclick="event.stopPropagation(); deleteItem('{{.ID}}')" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Delete"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
@@ -161,13 +161,15 @@
                 <h2 class="text-2xl font-semibold mb-4 text-center text-text">Links</h2>
                 <div id="links-list" class="flex flex-col gap-2">
                     {{range .}}{{if eq .Type "link"}}
-                    <div class="flex items-center justify-between bg-base border border-transparent hover:border-surface1 rounded-3xl px-4 py-2 transition-colors duration-300">
-                        <div class="font-medium text-base truncate text-text mr-2">{{.Content}}</div>
-                        <div class="flex items-center gap-0 sm:gap-1 flex-shrink-0">
-                            <button onclick="copyToClipboard('{{.Content}}', this)" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Copy"><i class="fas fa-copy"></i></button>
-                            <button onclick="event.stopPropagation(); deleteItem('{{.ID}}')" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Delete"><i class="fas fa-trash"></i></button>
+                    <a href="{{.Content}}" target="_blank" rel="noopener noreferrer" class="block bg-base border border-transparent hover:border-surface1 rounded-3xl px-4 py-2 transition-colors duration-300 no-underline group">
+                        <div class="flex items-center justify-between">
+                            <div class="font-medium text-base truncate text-text mr-2 group-hover:text-blue transition-colors">{{.Content}}</div>
+                            <div class="flex items-center gap-0 sm:gap-1 flex-shrink-0">
+                                <button onclick="event.preventDefault(); event.stopPropagation(); copyToClipboard('{{.Content}}', this)" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Copy"><i class="fas fa-copy"></i></button>
+                                <button onclick="event.preventDefault(); event.stopPropagation(); deleteItem('{{.ID}}')" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Delete"><i class="fas fa-trash"></i></button>
+                            </div>
                         </div>
-                    </div>
+                    </a>
                     {{end}}{{end}}
                 </div>
             </section>
@@ -203,6 +205,22 @@
                     </button>
                     <button type="button" id="cancel-button" class="py-2 bg-base hover:bg-surface0 text-subtext0 rounded-xl transition-colors font-medium text-sm">Cancel</button>
                     <button type="submit" class="py-2 bg-blue hover:bg-sapphire text-crust font-semibold rounded-xl transition-colors text-sm">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- New Link Modal -->
+    <div id="new-link-modal" class="hidden fixed inset-0 bg-overlay2/70 dark:bg-black/70 flex items-center justify-center max-w-full p-4 z-50">
+        <div id="link-modal-backdrop" class="absolute inset-0"></div>
+        <div class="bg-crust rounded-3xl p-6 w-full max-w-md z-10">
+            <h3 class="text-lg font-medium text-text mb-4">Add a new Link</h3>
+            <form id="new-link-form" action="/submit" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="type" value="link">
+                <input type="url" name="content" required placeholder="https://example.com" class="w-full bg-base px-4 py-3 text-text placeholder-overlay1 focus:outline-none rounded-2xl mb-6">
+                <div class="flex justify-end gap-4">
+                    <button type="button" id="link-cancel-button" class="px-4 py-2 bg-base hover:bg-surface0 text-subtext0 rounded-xl transition-colors font-medium">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-blue hover:bg-sapphire text-crust font-semibold rounded-xl transition-colors">Submit</button>
                 </div>
             </form>
         </div>
@@ -265,7 +283,7 @@
             });
         }
         
-        // Modal handling
+        // Modal handling for New Item
         const newButton = document.getElementById('new-button');
         const cancelButton = document.getElementById('cancel-button');
         const newItemModal = document.getElementById('new-item-modal');
@@ -273,6 +291,18 @@
         newButton.addEventListener('click', () => newItemModal.classList.remove('hidden'));
         cancelButton.addEventListener('click', () => newItemModal.classList.add('hidden'));
         modalBackdrop.addEventListener('click', () => newItemModal.classList.add('hidden'));
+
+        // Modal handling for New Link
+        const newLinkButton = document.getElementById('new-link-button');
+        const newLinkModal = document.getElementById('new-link-modal');
+        const linkModalBackdrop = document.getElementById('link-modal-backdrop');
+        const linkCancelButton = document.getElementById('link-cancel-button');
+        newLinkButton.addEventListener('click', () => newLinkModal.classList.remove('hidden'));
+        linkCancelButton.addEventListener('click', () => newLinkModal.classList.add('hidden'));
+        linkModalBackdrop.addEventListener('click', () => newLinkModal.classList.add('hidden'));
+        document.getElementById('new-link-form').addEventListener('submit', () => {
+            newLinkModal.classList.add('hidden');
+        });
         
         // File upload and drag & drop handling
         const fileInput = document.getElementById('file-upload');
@@ -494,7 +524,7 @@
             const evtSource = new EventSource("/api/updates");
             evtSource.onmessage = function(event) {
                 if (event.data === "content_updated") {
-                    window.location.reload(); 
+                    setTimeout(() => { window.location.reload(); }, 100);
                 }
             };
             evtSource.onerror = function() {
