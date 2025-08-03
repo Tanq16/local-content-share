@@ -1,46 +1,134 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Notepad</title>
-  <link rel="stylesheet" href="/static/fontawesome/css/all.min.css">
-  <link rel="stylesheet" href="/style.css">
-  <link rel="icon" type="image/x-icon" href="/favicon.ico">
-  <link href="/static/css/inter.css" rel="stylesheet">
-  <link rel="stylesheet" href="/static/css/catppuccin-latte.css" media="(prefers-color-scheme: light)">
-  <link rel="stylesheet" href="/static/css/catppuccin-mocha.css" media="(prefers-color-scheme: dark)">
-  <script src="/static/js/highlight.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notepad</title>
+    <link rel="stylesheet" href="/static/fontawesome/css/all.min.css">
+    <link href="/static/css/inter.css" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+
+    <!-- Syntax Highlighting Styles (Catppuccin) -->
+    <link rel="stylesheet" href="/static/css/catppuccin-latte.css" media="(prefers-color-scheme: light)">
+    <link rel="stylesheet" href="/static/css/catppuccin-mocha.css" media="(prefers-color-scheme: dark)">
+
+    <!-- Catppuccin Color Palette -->
+    <style>
+        :root { /* Catppuccin Latte (Light Theme) */
+            --rosewater: #dc8a78; --flamingo: #dd7878; --pink: #ea76cb;
+            --mauve: #8839ef; --red: #d20f39; --maroon: #e64553;
+            --peach: #fe640b; --yellow: #df8e1d; --green: #40a02b;
+            --teal: #179299; --sky: #04a5e5; --sapphire: #209fb5;
+            --blue: #1e66f5; --lavender: #7287fd; --text: #4c4f69;
+            --subtext1: #5c5f77; --subtext0: #6c6f85; --overlay2: #7c7f93;
+            --overlay1: #8c8fa1; --overlay0: #9ca0b0; --surface2: #acb0be;
+            --surface1: #bcc0cc; --surface0: #ccd0da; --base: #eff1f5;
+            --mantle: #e6e9ef; --crust: #dce0e8;
+        }
+        html.dark { /* Catppuccin Mocha (Dark Theme) */
+            --rosewater: #f5e0dc; --flamingo: #f2cdcd; --pink: #f5c2e7;
+            --mauve: #cba6f7; --red: #f38ba8; --maroon: #eba0ac;
+            --peach: #fab387; --yellow: #f9e2af; --green: #a6e3a1;
+            --teal: #94e2d5; --sky: #89dceb; --sapphire: #74c7ec;
+            --blue: #89b4fa; --lavender: #b4befe; --text: #cdd6f4;
+            --subtext1: #bac2de; --subtext0: #a6adc8; --overlay2: #9399b2;
+            --overlay1: #7f849c; --overlay0: #6c7086; --surface2: #585b70;
+            --surface1: #45475a; --surface0: #313244; --base: #1e1e2e;
+            --mantle: #181825; --crust: #11111b;
+        }
+        #editor-container {
+            height: calc(100vh - 120px);
+        }
+        #markdown-preview a {
+            color: var(--blue);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+    <script>
+        // Immediately apply theme to prevent Flash of Unstyled Content (FOUC)
+        (function() {
+            function applyTheme(theme) {
+                if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            }
+            const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+            applyTheme(mediaQuery.matches ? 'dark' : 'light');
+            mediaQuery.addEventListener('change', (e) => {
+                applyTheme(e.matches ? 'dark' : 'light');
+            });
+        })();
+    </script>
+    <script src="/static/js/tailwindcss.js"></script>
+    <script>
+        // Configure Tailwind to use the Catppuccin color variables
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    borderRadius: {
+                        '4xl': '2rem',
+                    },
+                    colors: {
+                        'rosewater': 'var(--rosewater)', 'flamingo': 'var(--flamingo)',
+                        'pink': 'var(--pink)', 'mauve': 'var(--mauve)',
+                        'red': 'var(--red)', 'maroon': 'var(--maroon)',
+                        'peach': 'var(--peach)', 'yellow': 'var(--yellow)',
+                        'green': 'var(--green)', 'teal': 'var(--teal)',
+                        'sky': 'var(--sky)', 'sapphire': 'var(--sapphire)',
+                        'blue': 'var(--blue)', 'lavender': 'var(--lavender)',
+                        'text': 'var(--text)', 'subtext1': 'var(--subtext1)',
+                        'subtext0': 'var(--subtext0)', 'overlay2': 'var(--overlay2)',
+                        'overlay1': 'var(--overlay1)', 'overlay0': 'var(--overlay0)',
+                        'surface2': 'var(--surface2)', 'surface1': 'var(--surface1)',
+                        'surface0': 'var(--surface0)', 'base': 'var(--base)',
+                        'mantle': 'var(--mantle)', 'crust': 'var(--crust)',
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body>
-  <div class="note-container">
-    <div class="app-title">Notepad</div>
-    <div class="note-header">
-      <button class="btn-icon" onclick="window.location.href='/'">
-        <i class="fas fa-arrow-left"></i> Back
-      </button>
-      <button class="btn-icon" onclick="window.location.href='/rtext'">
-        <i class="fas fa-text-height"></i> Rich Text
-      </button>
+<body class="bg-crust text-text antialiased transition-colors duration-300">
+
+    <div class="container mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
+        <!-- Header with title and controls -->
+        <header class="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <h1 class="text-2xl sm:text-3xl font-bold text-mauve">Notepad</h1>
+            <div class="flex items-center gap-2">
+                <a href="/" class="flex items-center gap-2 px-3 py-2 bg-base hover:bg-surface0 rounded-xl cursor-pointer transition-colors no-underline" title="Back to Home">
+                    <i class="fas fa-arrow-left text-subtext0"></i>
+                    <span class="font-medium text-sm text-subtext0 hidden sm:inline">Back</span>
+                </a>
+                <button onclick="undoChange()" title="Undo" class="flex items-center justify-center w-10 h-10 bg-base hover:bg-surface0 rounded-xl cursor-pointer transition-colors">
+                    <i class="fas fa-undo text-subtext0"></i>
+                </button>
+                <button onclick="redoChange()" title="Redo" class="flex items-center justify-center w-10 h-10 bg-base hover:bg-surface0 rounded-xl cursor-pointer transition-colors">
+                    <i class="fas fa-redo text-subtext0"></i>
+                </button>
+                <button id="toggle-mode" onclick="toggleMode()" title="Reader Mode" class="flex items-center justify-center w-10 h-10 bg-base hover:bg-surface0 rounded-xl cursor-pointer transition-colors">
+                    <i class="fas fa-book-reader text-subtext0"></i>
+                </button>
+            </div>
+        </header>
+
+        <main>
+            <!-- Editor and Preview Container -->
+            <div id="editor-container">
+                <textarea id="markdown-editor" placeholder="Write your markdown here..." spellcheck="false" class="w-full h-full p-4 bg-base rounded-2xl text-text placeholder-overlay1 focus:outline-none resize-none font-mono"></textarea>
+                <div id="markdown-preview" class="w-full h-full p-4 bg-base rounded-2xl overflow-y-auto prose dark:prose-invert max-w-none prose-pre:bg-mantle prose-pre:text-text prose-code:text-text hidden"></div>
+            </div>
+        </main>
     </div>
-    
-    <div class="note-content">
-      <div class="editor-toolbar">
-        <button id="decrease-font" title="Decrease Font Size"><i class="fas fa-search-minus"></i></button>
-        <button id="increase-font" title="Increase Font Size"><i class="fas fa-search-plus"></i></button>
-        <button onclick="undoChange()" title="Undo"><i class="fas fa-undo"></i></button>
-        <button onclick="redoChange()" title="Redo"><i class="fas fa-redo"></i></button>
-        <button id="toggle-mode" onclick="toggleMode()" title="Reader Mode"><i class="fas fa-book-reader"></i></button>
-      </div>
-      
-      <div id="editor-container">
-        <textarea id="markdown-editor" placeholder="Write your markdown here..." spellcheck="false"></textarea>
-        <div id="markdown-preview" class="markdown-body"></div>
-      </div>
-    </div>
-  </div>
-  
-  <script src="/static/js/marked.min.js"></script>
-  <script src="/md.js"></script>
+
+    <!-- JavaScript -->
+    <script src="/static/js/highlight.min.js"></script>
+    <script src="/static/js/marked.min.js"></script>
+    <script src="/md.js"></script>
+
 </body>
 </html>

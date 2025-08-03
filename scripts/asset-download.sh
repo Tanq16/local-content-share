@@ -8,7 +8,7 @@ mkdir -p static/js
 mkdir -p static/css
 
 # Download Tailwind CSS
-curl -sL "https://cdn.tailwindcss.com" -o "static/js/tailwindcss.js"
+curl -sL "https://cdn.tailwindcss.com?plugins=typography" -o "static/js/tailwindcss.js"
 
 # Download Font Awesome 6.7.2
 echo "Downloading Font Awesome..."
