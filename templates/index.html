@@ -4,14 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Local Content Share</title>
-
     <link rel="stylesheet" href="/static/fontawesome/css/all.min.css">
-    <!-- <link rel="stylesheet" href="/style.css"> -->
     <link href="/static/css/inter.css" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     
     <!-- PWA Meta Tags -->
-    <meta name="theme-color" content="#8839ef"> <!-- mauve -->
+    <meta name="theme-color" content="#cba6f7"> <!-- mauve:dark -->
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/icon-192.png">
     <meta name="mobile-web-app-capable" content="yes">
@@ -61,6 +59,7 @@
             });
         })();
     </script>
+    <!-- TODO: replace with static -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -89,7 +88,6 @@
             }
         }
     </script>
-    </style>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -122,43 +120,41 @@
                 </div>
             </section>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <!-- Snippets Section -->
-                <section class="content-section">
-                    <h2 class="text-2xl font-semibold mb-4 text-center text-text">Snippets</h2>
-                    <div id="snippets-list" class="flex flex-col gap-2">
-                        {{range .}}{{if eq .Type "text"}}
-                        <div class="flex items-center justify-between bg-base border border-transparent hover:border-surface1 rounded-3xl px-4 py-2 transition-colors duration-300 relative" onclick="window.location.href='/show/{{.ID}}';">
-                            <div class="font-medium text-base truncate text-text mr-2 cursor-pointer">{{.Filename}}</div>
-                            <div class="flex items-center gap-0 sm:gap-1 flex-shrink-0">
-                                <button onclick="event.stopPropagation(); showRenamePrompt('{{.ID}}')" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Rename"><i class="fas fa-i-cursor"></i></button>
-                                <button onclick="event.stopPropagation(); showEditForm('{{.ID}}', '{{.Filename}}')" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Edit"><i class="fas fa-pen"></i></button>
-                                <button onclick="event.stopPropagation(); copyToClipboard('{{.Content}}', this)" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Copy"><i class="fas fa-copy"></i></button>
-                                <a href="/delete/{{.ID}}" onclick="event.stopPropagation(); return confirm('Are you sure you want to delete this snippet?');" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors no-underline" title="Delete"><i class="fas fa-trash"></i></a>
-                            </div>
+            <!-- Snippets Section -->
+            <section class="content-section">
+                <h2 class="text-2xl font-semibold mb-4 text-center text-text">Snippets</h2>
+                <div id="snippets-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {{range .}}{{if eq .Type "text"}}
+                    <div class="flex items-center justify-between bg-base border border-transparent hover:border-surface1 rounded-3xl px-4 py-2 transition-colors duration-300 relative cursor-pointer" onclick="showViewModal('{{.ID}}', '{{.Filename}}')">
+                        <div class="font-medium text-base truncate text-text mr-2">{{.Filename}}</div>
+                        <div class="flex items-center gap-0 sm:gap-1 flex-shrink-0">
+                            <button onclick="event.stopPropagation(); showRenameModal('{{.ID}}', '{{.Filename}}')" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Rename"><i class="fas fa-i-cursor"></i></button>
+                            <button onclick="event.stopPropagation(); showEditForm('{{.ID}}', '{{.Filename}}')" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Edit"><i class="fas fa-pen"></i></button>
+                            <button onclick="event.stopPropagation(); copyToClipboard('{{.Content}}', this)" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Copy"><i class="fas fa-copy"></i></button>
+                            <button onclick="event.stopPropagation(); deleteItem('{{.ID}}')" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Delete"><i class="fas fa-trash"></i></button>
                         </div>
-                        {{end}}{{end}}
                     </div>
-                </section>
+                    {{end}}{{end}}
+                </div>
+            </section>
 
-                <!-- Files Section -->
-                <section class="content-section">
-                    <h2 class="text-2xl font-semibold mb-4 text-center text-text">Files</h2>
-                    <div id="files-list" class="flex flex-col gap-2">
-                        {{range .}}{{if eq .Type "file"}}
-                        <div class="flex items-center justify-between bg-base border border-transparent hover:border-surface1 rounded-3xl px-4 py-2 transition-colors duration-300">
-                            <div class="font-medium text-base truncate text-text mr-2">{{.Filename}}</div>
-                            <div class="flex items-center gap-0 sm:gap-1 flex-shrink-0">
-                                <button onclick="event.stopPropagation(); showRenamePrompt('{{.ID}}')" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Rename"><i class="fas fa-i-cursor"></i></button>
-                                <a href="/download/{{.ID}}" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors no-underline" title="Download"><i class="fas fa-download"></i></a>
-                                <a href="/view/{{.ID}}" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors no-underline" title="View"><i class="fas fa-eye"></i></a>
-                                <a href="/delete/{{.ID}}" onclick="return confirm('Are you sure you want to delete this file?');" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors no-underline" title="Delete"><i class="fas fa-trash"></i></a>
-                            </div>
+            <!-- Files Section -->
+            <section class="content-section">
+                <h2 class="text-2xl font-semibold mb-4 text-center text-text">Files</h2>
+                <div id="files-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {{range .}}{{if eq .Type "file"}}
+                    <div class="flex items-center justify-between bg-base border border-transparent hover:border-surface1 rounded-3xl px-4 py-2 transition-colors duration-300">
+                        <div class="font-medium text-base truncate text-text mr-2">{{.Filename}}</div>
+                        <div class="flex items-center gap-0 sm:gap-1 flex-shrink-0">
+                            <button onclick="event.stopPropagation(); showRenameModal('{{.ID}}', '{{.Filename}}')" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Rename"><i class="fas fa-i-cursor"></i></button>
+                            <a href="/download/{{.ID}}" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors no-underline" title="Download"><i class="fas fa-download"></i></a>
+                            <a href="/view/{{.ID}}" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors no-underline" title="View"><i class="fas fa-eye"></i></a>
+                            <button onclick="event.stopPropagation(); deleteItem('{{.ID}}')" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Delete"><i class="fas fa-trash"></i></button>
                         </div>
-                        {{end}}{{end}}
                     </div>
-                </section>
-            </div>
+                    {{end}}{{end}}
+                </div>
+            </section>
 
             <!-- Links Section -->
             <section class="content-section">
@@ -169,7 +165,7 @@
                         <div class="font-medium text-base truncate text-text mr-2">{{.Content}}</div>
                         <div class="flex items-center gap-0 sm:gap-1 flex-shrink-0">
                             <button onclick="copyToClipboard('{{.Content}}', this)" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Copy"><i class="fas fa-copy"></i></button>
-                            <a href="/delete/{{.ID}}" onclick="return confirm('Are you sure you want to delete this link?');" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors no-underline" title="Delete"><i class="fas fa-trash"></i></a>
+                            <button onclick="event.stopPropagation(); deleteItem('{{.ID}}')" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Delete"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
                     {{end}}{{end}}
@@ -178,29 +174,29 @@
         </main>
     </div>
 
-    <!-- Modal -->
+    <!-- New Item Modal -->
     <div id="new-item-modal" class="hidden fixed inset-0 bg-overlay2/70 dark:bg-black/70 flex items-center justify-center max-w-full p-4 z-50">
         <div id="modal-backdrop" class="absolute inset-0"></div>
         <div class="bg-crust rounded-3xl p-4 w-full max-w-lg z-10">
             <form id="new-item-form" action="/submit" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="expiry" id="expiryValue" value="Never">
                 <div class="mb-4">
-                    <label for="file-upload" class="flex flex-col items-center justify-center w-full h-24 border-2 border-surface0 border-dashed rounded-2xl cursor-pointer bg-base hover:bg-surface0">
+                    <label for="file-upload" class="flex flex-col items-center justify-center w-full h-32 border-2 border-surface0 border-dashed rounded-2xl cursor-pointer bg-base hover:bg-surface0 transition-all">
                         <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                            <i class="fas fa-cloud-upload-alt text-3xl text-overlay2 mb-1"></i>
-                            <p class="text-xs text-overlay2"><span class="font-semibold">Click to upload</span> or drag and drop</p>
-                            <p id="file-name-display" class="text-xs text-blue mt-1"></p>
+                            <i class="fas fa-cloud-upload-alt text-3xl text-overlay2 mb-2"></i>
+                            <p class="text-sm text-overlay2"><span class="font-semibold">Click to upload</span> or drag and drop</p>
+                            <p id="file-name-display" class="text-xs text-blue mt-2 font-medium"></p>
                         </div>
-                        <input id="file-upload" name="file-upload" type="file" class="hidden" />
+                        <input id="file-upload" name="file-upload" type="file" class="hidden" multiple />
                     </label>
                 </div>
                 <div class="mb-4">
                      <input type="text" name="name" placeholder="Name (optional)" class="w-full bg-base px-4 py-3 text-text placeholder-overlay1 focus:outline-none rounded-2xl">
                 </div>
                 <div>
-                    <textarea name="content" placeholder="Content (optional, URL for links)" rows="4" class="w-full bg-base px-4 py-3 text-text placeholder-overlay1 focus:outline-none resize-y rounded-2xl"></textarea>
+                    <textarea name="content" placeholder="Content (uploaded files are prioritized when both are provided)" rows="4" class="w-full bg-base px-4 py-3 text-text placeholder-overlay1 focus:outline-none resize-y rounded-2xl"></textarea>
                 </div>
-                <div class="grid grid-cols-3 gap-3 mt-6">
+                <div class="grid grid-cols-3 gap-3 mt-3">
                     <button type="button" id="expiry-button" class="flex items-center justify-center gap-2 py-2 bg-base hover:bg-surface0 rounded-xl cursor-pointer transition-colors">
                         <i class="fas fa-clock text-subtext0"></i>
                         <span id="expiry-text" class="font-medium text-sm text-subtext0">Never</span>
@@ -209,6 +205,49 @@
                     <button type="submit" class="py-2 bg-blue hover:bg-sapphire text-crust font-semibold rounded-xl transition-colors text-sm">Submit</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Rename Modal -->
+    <div id="rename-modal" class="hidden fixed inset-0 bg-overlay2/70 dark:bg-black/70 flex items-center justify-center max-w-full p-4 z-50">
+        <div id="rename-modal-backdrop" class="absolute inset-0"></div>
+        <div class="bg-crust rounded-3xl p-6 w-full max-w-md z-10">
+            <h3 class="text-lg font-medium text-text mb-2">Rename Item</h3>
+            <p class="text-sm text-subtext1 mb-4">Current name: <code id="old-name-display" class="bg-base text-peach rounded-md px-1 py-0.5"></code></p>
+            <form id="rename-form" method="POST">
+                <input type="text" id="new-name-input" name="newname" required placeholder="Enter new name" class="w-full bg-base px-4 py-3 text-text placeholder-overlay1 focus:outline-none rounded-2xl mb-6">
+                <div class="flex justify-end gap-4">
+                    <button type="button" id="rename-cancel-button" class="px-4 py-2 bg-base hover:bg-surface0 text-subtext0 rounded-xl transition-colors font-medium">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-blue hover:bg-sapphire text-crust font-semibold rounded-xl transition-colors">Rename</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- View Snippet Modal -->
+    <div id="view-snippet-modal" class="hidden fixed inset-0 bg-overlay2/70 dark:bg-black/70 flex items-center justify-center max-w-full p-4 z-50">
+        <div id="view-modal-backdrop" class="absolute inset-0"></div>
+        <div class="bg-crust rounded-3xl p-4 w-full max-w-4xl h-full max-h-[80vh] flex flex-col z-10">
+            <h3 id="view-snippet-title" class="text-lg font-medium text-text mb-4 truncate"></h3>
+            <div class="flex-grow bg-base rounded-2xl p-4 overflow-y-auto mb-4">
+                <pre id="view-snippet-content" class="text-text whitespace-pre-wrap break-words"></pre>
+            </div>
+            <div class="flex justify-end gap-4">
+                <button type="button" id="view-copy-button" class="px-4 py-2 bg-blue hover:bg-sapphire text-crust font-semibold rounded-xl transition-colors">Copy</button>
+                <button type="button" id="view-close-button" class="px-4 py-2 bg-base hover:bg-surface0 text-subtext0 rounded-xl transition-colors font-medium">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmation-modal" class="hidden fixed inset-0 bg-overlay2/70 dark:bg-black/70 flex items-center justify-center max-w-full p-4 z-50">
+        <div class="bg-crust rounded-3xl p-6 w-full max-w-sm z-10 text-center">
+            <h3 id="confirmation-title" class="text-lg font-medium text-text mb-4">Are you sure?</h3>
+            <p id="confirmation-message" class="text-sm text-subtext1 mb-6">Do you really want to delete this item? This process cannot be undone.</p>
+            <div class="flex justify-center gap-4">
+                <button id="confirm-cancel-button" class="px-4 py-2 bg-base hover:bg-surface0 text-subtext0 rounded-xl transition-colors font-medium">Cancel</button>
+                <button id="confirm-action-button" class="px-4 py-2 bg-red hover:bg-maroon text-crust font-semibold rounded-xl transition-colors">Delete</button>
+            </div>
         </div>
     </div>
 
@@ -229,21 +268,46 @@
         // Modal handling
         const newButton = document.getElementById('new-button');
         const cancelButton = document.getElementById('cancel-button');
-        const modal = document.getElementById('new-item-modal');
+        const newItemModal = document.getElementById('new-item-modal');
         const modalBackdrop = document.getElementById('modal-backdrop');
-
-        newButton.addEventListener('click', () => modal.classList.remove('hidden'));
-        cancelButton.addEventListener('click', () => modal.classList.add('hidden'));
-        modalBackdrop.addEventListener('click', () => modal.classList.add('hidden'));
+        newButton.addEventListener('click', () => newItemModal.classList.remove('hidden'));
+        cancelButton.addEventListener('click', () => newItemModal.classList.add('hidden'));
+        modalBackdrop.addEventListener('click', () => newItemModal.classList.add('hidden'));
         
-        // File upload display name
-        document.getElementById('file-upload').addEventListener('change', function() {
-            const fileNameDisplay = document.getElementById('file-name-display');
-            if (this.files.length > 0) {
-                fileNameDisplay.textContent = `Selected: ${this.files[0].name}`;
-            } else {
+        // File upload and drag & drop handling
+        const fileInput = document.getElementById('file-upload');
+        const dropZone = fileInput.closest('label');
+        const fileNameDisplay = document.getElementById('file-name-display');
+        function updateFileDisplay(files) {
+            if (!files || files.length === 0) {
                 fileNameDisplay.textContent = '';
+                return;
             }
+            if (files.length > 1) {
+                fileNameDisplay.textContent = `${files.length} files selected`;
+            } else {
+                fileNameDisplay.textContent = `Selected: ${files[0].name}`;
+            }
+        }
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-blue', 'bg-surface0');
+        });
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-blue', 'bg-surface0');
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-blue', 'bg-surface0');
+            const droppedFiles = e.dataTransfer.files;
+            if (droppedFiles.length > 0) {
+                fileInput.files = droppedFiles;
+                updateFileDisplay(droppedFiles);
+            }
+        });
+        fileInput.addEventListener('change', () => {
+            updateFileDisplay(fileInput.files);
         });
 
         // Expiry cycle logic
@@ -251,13 +315,11 @@
         const expiryButton = document.getElementById('expiry-button');
         const expiryText = document.getElementById('expiry-text');
         const expiryValueInput = document.getElementById('expiryValue');
-
         expiryButton.addEventListener('click', () => {
             const currentText = expiryText.innerText;
             const currentIndex = expiryOptions.indexOf(currentText);
             const nextIndex = (currentIndex + 1) % expiryOptions.length;
             const newValue = expiryOptions[nextIndex];
-            
             if (newValue === "Custom") {
                 const customValue = prompt("Enter a custom expiration time (e.g., 1h, 30m, 2d, 1w, 1M, 1y):");
                 if (customValue) {
@@ -281,41 +343,41 @@
             }).catch(error => console.error('Error fetching expiry options:', error));
         });
 
-        // Rename prompt function
-        function showRenamePrompt(id) {
-            const newName = prompt('Enter new name:');
-            if (newName) {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = `/rename/${id}`;
-                
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = 'newname';
-                input.value = newName;
-                
-                form.appendChild(input);
-                document.body.appendChild(form);
-                form.submit();
-            }
+        // Rename Modal Logic
+        const renameModal = document.getElementById('rename-modal');
+        const renameForm = document.getElementById('rename-form');
+        const oldNameDisplay = document.getElementById('old-name-display');
+        const newNameInput = document.getElementById('new-name-input');
+        const renameCancelButton = document.getElementById('rename-cancel-button');
+        const renameModalBackdrop = document.getElementById('rename-modal-backdrop');
+        function showRenameModal(id, currentName) {
+            renameForm.action = `/rename/${id}`;
+            oldNameDisplay.textContent = currentName;
+            newNameInput.value = currentName;
+            renameModal.classList.remove('hidden');
+            newNameInput.focus();
+            newNameInput.select();
         }
+        renameCancelButton.addEventListener('click', () => renameModal.classList.add('hidden'));
+        renameModalBackdrop.addEventListener('click', () => renameModal.classList.add('hidden'));
+        renameForm.addEventListener('submit', (e) => {
+            if (!newNameInput.value) {
+                e.preventDefault(); 
+            }
+            renameModal.classList.add('hidden');
+        });
 
         // Edit form logic
         async function showEditForm(id, filename) {
             const response = await fetch(`/raw/${id}`);
             const content = await response.text();
-            
-            // Populate and show the modal for editing
             const form = document.getElementById('new-item-form');
             form.action = `/edit/${id}`;
             form.querySelector('[name="name"]').value = filename;
-            form.querySelector('[name="name"]').disabled = true; // Don't allow renaming here
+            form.querySelector('[name="name"]').disabled = true; 
             form.querySelector('[name="content"]').value = content;
-            form.querySelector('[name="file-upload"]').parentElement.parentElement.style.display = 'none'; // Hide file upload
-            
-            modal.classList.remove('hidden');
-            
-            // Reset form on cancel
+            form.querySelector('[name="file-upload"]').parentElement.parentElement.style.display = 'none';
+            newItemModal.classList.remove('hidden');
             const onCancel = () => {
                 form.action = '/submit';
                 form.reset();
@@ -329,7 +391,6 @@
         // Copy to clipboard function
         function copyToClipboard(text, buttonElement) {
             if (!navigator.clipboard) {
-                // Fallback for older browsers
                 const textArea = document.createElement("textarea");
                 textArea.value = text;
                 document.body.appendChild(textArea);
@@ -359,12 +420,80 @@
             }, 2000);
         }
         
+        // Confirmation Modal Logic
+        const confirmationModal = document.getElementById('confirmation-modal');
+        const confirmCancelButton = document.getElementById('confirm-cancel-button');
+        const confirmActionButton = document.getElementById('confirm-action-button');
+        let confirmCallback = null;
+        function showConfirmation(callback, title = 'Are you sure?', message = 'This action cannot be undone.') {
+            document.getElementById('confirmation-title').textContent = title;
+            document.getElementById('confirmation-message').textContent = message;
+            confirmationModal.classList.remove('hidden');
+            confirmCallback = callback;
+        }
+        confirmCancelButton.addEventListener('click', () => {
+            confirmationModal.classList.add('hidden');
+            confirmCallback = null;
+        });
+        confirmActionButton.addEventListener('click', () => {
+            if (confirmCallback) {
+                confirmCallback();
+            }
+            confirmationModal.classList.add('hidden');
+            confirmCallback = null;
+        });
+
+        function deleteItem(id) {
+            showConfirmation(() => {
+                fetch(`/delete/${id}`, {
+                    method: 'POST'
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        console.error('Failed to delete the item.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting item:', error);
+                });
+            }, 'Delete Item?', `Are you sure you want to delete this item? This action is permanent.`);
+        }
+
+        // View Snippet Modal Logic
+        const viewSnippetModal = document.getElementById('view-snippet-modal');
+        const viewModalBackdrop = document.getElementById('view-modal-backdrop');
+        const viewSnippetTitle = document.getElementById('view-snippet-title');
+        const viewSnippetContent = document.getElementById('view-snippet-content');
+        const viewCloseButton = document.getElementById('view-close-button');
+        const viewCopyButton = document.getElementById('view-copy-button');
+        let contentToCopy = '';
+        async function showViewModal(id, filename) {
+            try {
+                const response = await fetch(`/raw/${id}`);
+                if (!response.ok) throw new Error('Failed to fetch snippet content.');
+                
+                const content = await response.text();
+                contentToCopy = content;
+
+                viewSnippetTitle.textContent = filename;
+                viewSnippetContent.textContent = content;
+                viewSnippetModal.classList.remove('hidden');
+            } catch (error) {
+                console.error('Error showing view modal:', error);
+            }
+        }
+        viewCloseButton.addEventListener('click', () => viewSnippetModal.classList.add('hidden'));
+        viewModalBackdrop.addEventListener('click', () => viewSnippetModal.classList.add('hidden'));
+        viewCopyButton.addEventListener('click', () => {
+            copyToClipboard(contentToCopy, viewCopyButton);
+        });
+
         // SSE for live updates
         document.addEventListener('DOMContentLoaded', function() {
             const evtSource = new EventSource("/api/updates");
             evtSource.onmessage = function(event) {
                 if (event.data === "content_updated") {
-                    window.location.reload(); // just reload
+                    window.location.reload(); 
                 }
             };
             evtSource.onerror = function() {

@@ -188,12 +188,12 @@ function example() {
 }
 ` + "```"
 
-const rtextPlaceholder = `<h1>Welcome to Rich Text Notepad</h1>
-<p>Start typing here to create your document. Use the toolbar above to format your text.</p>`
+// const rtextPlaceholder = `<h1>Welcome to Rich Text Notepad</h1>
+// <p>Start typing here to create your document. Use the toolbar above to format your text.</p>`
 
 func generateUniqueFilename(baseDir, baseName string) string {
-	// Sanitize: allow only letters, numbers, hyphen, underscore, and space
-	reg := regexp.MustCompile(`[^\p{L}\p{N}\p{M}\s\.\-_]`)
+	// Sanitize: allow only letters (+unicode), numbers, space, dot, hyphen, underscore, () and []
+	reg := regexp.MustCompile(`[^\p{L}\p{N}\p{M}\s\.\-_()\[\]]`)
 	sanitizedName := reg.ReplaceAllString(baseName, "-")
 	log.Printf("Sanitized name %s TO %s\n", baseName, sanitizedName)
 	// First try without random prefix
@@ -272,7 +272,7 @@ func main() {
 
 	// Create placeholder notepad files if they don't exist
 	createNotepadFileIfNotExists("md.file", mdPlaceholder)
-	createNotepadFileIfNotExists("rtext.file", rtextPlaceholder)
+	// createNotepadFileIfNotExists("rtext.file", rtextPlaceholder)
 
 	// Initialize the expiration tracker
 	expirationTracker = initExpirationTracker()
@@ -358,9 +358,9 @@ func main() {
 		tmpl.ExecuteTemplate(w, "md.html", nil)
 	})
 
-	http.HandleFunc("/rtext", func(w http.ResponseWriter, r *http.Request) {
-		tmpl.ExecuteTemplate(w, "rtext.html", nil)
-	})
+	// http.HandleFunc("/rtext", func(w http.ResponseWriter, r *http.Request) {
+	// 	tmpl.ExecuteTemplate(w, "rtext.html", nil)
+	// })
 
 	// Retrieve custom expiration options
 	http.HandleFunc("/getExpiryOptions", func(w http.ResponseWriter, r *http.Request) {
@@ -419,16 +419,16 @@ func main() {
 		io.Copy(w, file)
 	})
 
-	http.HandleFunc("/rtext.js", func(w http.ResponseWriter, r *http.Request) {
-		file, err := staticFS.Open("rtext.js")
-		if err != nil {
-			http.Error(w, "JavaScript not found", http.StatusNotFound)
-			return
-		}
-		defer file.Close()
-		w.Header().Set("Content-Type", "application/javascript")
-		io.Copy(w, file)
-	})
+	// http.HandleFunc("/rtext.js", func(w http.ResponseWriter, r *http.Request) {
+	// 	file, err := staticFS.Open("rtext.js")
+	// 	if err != nil {
+	// 		http.Error(w, "JavaScript not found", http.StatusNotFound)
+	// 		return
+	// 	}
+	// 	defer file.Close()
+	// 	w.Header().Set("Content-Type", "application/javascript")
+	// 	io.Copy(w, file)
+	// })
 
 	// Handle favicon and icons
 	http.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
@@ -468,7 +468,7 @@ func main() {
 	http.HandleFunc("/notepad/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "GET" {
 			filename := strings.TrimPrefix(r.URL.Path, "/notepad/")
-			if filename != "md.file" && filename != "rtext.file" {
+			if filename != "md.file" { // && filename != "rtext.file" {
 				http.Error(w, "Invalid notepad file", http.StatusBadRequest)
 				return
 			}
@@ -483,7 +483,7 @@ func main() {
 			return
 		} else if r.Method == "POST" {
 			filename := strings.TrimPrefix(r.URL.Path, "/notepad/")
-			if filename != "md.file" && filename != "rtext.file" {
+			if filename != "md.file" { // && filename != "rtext.file" {
 				http.Error(w, "Invalid notepad file", http.StatusBadRequest)
 				return
 			}
@@ -662,31 +662,31 @@ func main() {
 		w.Write(content)
 	})
 
-	http.HandleFunc("/show/", func(w http.ResponseWriter, r *http.Request) {
-		id := strings.TrimPrefix(r.URL.Path, "/show/")
-		if !strings.HasPrefix(id, "text/") {
-			http.Error(w, "Only text files can be shown", http.StatusBadRequest)
-			return
-		}
-		content, err := os.ReadFile(filepath.Join("data", id))
-		if err != nil {
-			http.Error(w, "File not found", 404)
-			return
-		}
-		viewData := struct {
-			Content  string
-			Filename string
-		}{
-			Content:  string(content),
-			Filename: filepath.Base(id),
-		}
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		err = tmpl.ExecuteTemplate(w, "show.html", viewData)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-		log.Printf("Served %s for viewing\n", id)
-	})
+	// http.HandleFunc("/show/", func(w http.ResponseWriter, r *http.Request) {
+	// 	id := strings.TrimPrefix(r.URL.Path, "/show/")
+	// 	if !strings.HasPrefix(id, "text/") {
+	// 		http.Error(w, "Only text files can be shown", http.StatusBadRequest)
+	// 		return
+	// 	}
+	// 	content, err := os.ReadFile(filepath.Join("data", id))
+	// 	if err != nil {
+	// 		http.Error(w, "File not found", 404)
+	// 		return
+	// 	}
+	// 	viewData := struct {
+	// 		Content  string
+	// 		Filename string
+	// 	}{
+	// 		Content:  string(content),
+	// 		Filename: filepath.Base(id),
+	// 	}
+	// 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	// 	err = tmpl.ExecuteTemplate(w, "show.html", viewData)
+	// 	if err != nil {
+	// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+	// 	}
+	// 	log.Printf("Served %s for viewing\n", id)
+	// })
 
 	http.HandleFunc("/download/", func(w http.ResponseWriter, r *http.Request) {
 		filename := strings.TrimPrefix(r.URL.Path, "/download/")
