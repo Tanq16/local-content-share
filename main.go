@@ -261,18 +261,9 @@ func main() {
 	if err := os.MkdirAll(filepath.Join("data", "text"), 0755); err != nil {
 		log.Fatal(err)
 	}
-	if err := os.MkdirAll(filepath.Join("data", "links"), 0755); err != nil {
-		log.Fatal(err)
-	}
-	// Create notepad directory
-	if err := os.MkdirAll(filepath.Join("data", "notepad"), 0755); err != nil {
-		log.Fatal(err)
-	}
 	log.Println("Data directory created/reused without errors.")
-
-	// Create placeholder notepad files if they don't exist
-	createNotepadFileIfNotExists("md.file", mdPlaceholder)
-	// createNotepadFileIfNotExists("rtext.file", rtextPlaceholder)
+	createFileIfNotExists("notepad.file", mdPlaceholder)
+	createFileIfNotExists("links.file", "")
 
 	// Initialize the expiration tracker
 	expirationTracker = initExpirationTracker()
@@ -303,7 +294,6 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// Clean up expired files on page load
 		expirationTracker.CleanupExpired()
-
 		entries := []Entry{}
 		// Read text snippets
 		textFiles, _ := os.ReadDir(filepath.Join("data", "text"))
@@ -335,21 +325,21 @@ func main() {
 			})
 		}
 		// Read links
-		linkFiles, _ := os.ReadDir(filepath.Join("data", "links"))
-		for _, file := range linkFiles {
-			if file.IsDir() {
-				continue
+		data, err := os.ReadFile(filepath.Join("data", "links.file"))
+		if err == nil {
+			lines := strings.Split(strings.TrimSpace(string(data)), "\n")
+			for i, line := range lines {
+				line = strings.TrimSpace(line)
+				if line == "" {
+					continue
+				}
+				entries = append(entries, Entry{
+					ID:       fmt.Sprintf("links/line_%d", i+1),
+					Type:     "link",
+					Content:  line,
+					Filename: fmt.Sprintf("line_%d", i+1),
+				})
 			}
-			data, err := os.ReadFile(filepath.Join("data", "links", file.Name()))
-			if err != nil {
-				continue
-			}
-			entries = append(entries, Entry{
-				ID:       filepath.Join("links", file.Name()),
-				Type:     "link",
-				Content:  string(data),
-				Filename: file.Name(),
-			})
 		}
 		tmpl.ExecuteTemplate(w, "index.html", entries)
 	})
@@ -357,10 +347,6 @@ func main() {
 	http.HandleFunc("/md", func(w http.ResponseWriter, r *http.Request) {
 		tmpl.ExecuteTemplate(w, "md.html", nil)
 	})
-
-	// http.HandleFunc("/rtext", func(w http.ResponseWriter, r *http.Request) {
-	// 	tmpl.ExecuteTemplate(w, "rtext.html", nil)
-	// })
 
 	// Retrieve custom expiration options
 	http.HandleFunc("/getExpiryOptions", func(w http.ResponseWriter, r *http.Request) {
@@ -418,17 +404,6 @@ func main() {
 		w.Header().Set("Content-Type", "application/javascript")
 		io.Copy(w, file)
 	})
-
-	// http.HandleFunc("/rtext.js", func(w http.ResponseWriter, r *http.Request) {
-	// 	file, err := staticFS.Open("rtext.js")
-	// 	if err != nil {
-	// 		http.Error(w, "JavaScript not found", http.StatusNotFound)
-	// 		return
-	// 	}
-	// 	defer file.Close()
-	// 	w.Header().Set("Content-Type", "application/javascript")
-	// 	io.Copy(w, file)
-	// })
 
 	// Handle favicon and icons
 	http.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
@@ -506,16 +481,18 @@ func main() {
 	})
 
 	http.HandleFunc("/submit", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "POST" {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
 		if err := r.ParseMultipartForm(10 << 20); err != nil { // 10 MB limit for form
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-
 		entryType := r.FormValue("type")
 		expiryOption := r.FormValue("expiry")
 		content := r.FormValue("content")
 		name := r.FormValue("name")
-
 		if entryType == "link" {
 			// Handle link submission
 			if content == "" {
@@ -527,21 +504,23 @@ func main() {
 				http.Error(w, "Invalid URL format", http.StatusBadRequest)
 				return
 			}
-			filename := name
-			if filename == "" {
-				filename = time.Now().Format("20060102150405") + ".link"
+			linksFilePath := filepath.Join("data", "links.file")
+			var existingContent string
+			if data, err := os.ReadFile(linksFilePath); err == nil {
+				existingContent = string(data)
 			}
-			uniqueFileName := generateUniqueFilename("data/links", filename)
-			err = os.WriteFile(filepath.Join("data/links", uniqueFileName), []byte(content), 0644)
+			var newContent string
+			if name != "" {
+				newContent = content + "\n" + existingContent
+			} else {
+				newContent = content + "\n" + existingContent
+			}
+			err = os.WriteFile(linksFilePath, []byte(newContent), 0644)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			if expiryOption != "Never" {
-				fileID := filepath.Join("links", uniqueFileName)
-				expirationTracker.SetExpiration(fileID, expiryOption)
-			}
-			log.Printf("Saved link %s with expiry %s\n", uniqueFileName, expiryOption)
+			log.Printf("Saved link %s\n", content)
 		} else {
 			// Handle file and text submission
 			files := r.MultipartForm.File["file-upload"]
@@ -554,7 +533,6 @@ func main() {
 							return err
 						}
 						defer file.Close()
-
 						fileName := name
 						if fileName == "" {
 							fileName = fileHeader.Filename
@@ -599,7 +577,6 @@ func main() {
 				log.Printf("Saved text snippet %s with expiry %s\n", uniqueFileName, expiryOption)
 			}
 		}
-
 		notifyContentChange()
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	})
@@ -621,7 +598,6 @@ func main() {
 		// Get the new full path
 		newPath := filepath.Join(baseDir, newName)
 		oldFullPath := filepath.Join("data", oldPath)
-
 		// Check if there's an expiration for this file
 		expirationTracker.mu.Lock()
 		expiryTime, hasExpiry := expirationTracker.Expirations[oldPath]
@@ -634,7 +610,6 @@ func main() {
 			expirationTracker.saveToFile()
 		}
 		expirationTracker.mu.Unlock()
-
 		// Rename the file
 		err := os.Rename(oldFullPath, newPath)
 		if err != nil {
@@ -661,32 +636,6 @@ func main() {
 		w.Header().Set("Cache-Control", "no-store")
 		w.Write(content)
 	})
-
-	// http.HandleFunc("/show/", func(w http.ResponseWriter, r *http.Request) {
-	// 	id := strings.TrimPrefix(r.URL.Path, "/show/")
-	// 	if !strings.HasPrefix(id, "text/") {
-	// 		http.Error(w, "Only text files can be shown", http.StatusBadRequest)
-	// 		return
-	// 	}
-	// 	content, err := os.ReadFile(filepath.Join("data", id))
-	// 	if err != nil {
-	// 		http.Error(w, "File not found", 404)
-	// 		return
-	// 	}
-	// 	viewData := struct {
-	// 		Content  string
-	// 		Filename string
-	// 	}{
-	// 		Content:  string(content),
-	// 		Filename: filepath.Base(id),
-	// 	}
-	// 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	// 	err = tmpl.ExecuteTemplate(w, "show.html", viewData)
-	// 	if err != nil {
-	// 		http.Error(w, err.Error(), http.StatusInternalServerError)
-	// 	}
-	// 	log.Printf("Served %s for viewing\n", id)
-	// })
 
 	http.HandleFunc("/download/", func(w http.ResponseWriter, r *http.Request) {
 		filename := strings.TrimPrefix(r.URL.Path, "/download/")
@@ -732,7 +681,6 @@ func main() {
 			}
 		}
 		baseFilename := filepath.Base(filename)
-
 		w.Header().Set("Content-Type", contentType)
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", baseFilename))
 		w.Header().Set("Content-Length", fmt.Sprintf("%d", fileInfo.Size()))
@@ -757,6 +705,10 @@ func main() {
 			return
 		}
 		filename := strings.TrimPrefix(r.URL.Path, "/delete/")
+		if _, err := url.ParseRequestURI(filename); err == nil {
+			// Delete link
+			// read file, remove line, rewrite file.
+		}
 		err := os.Remove(filepath.Join("data", filename))
 		if err != nil {
 			log.Printf("Failed to delete %s: %v", filename, err)
@@ -806,15 +758,15 @@ func main() {
 	log.Fatal(http.ListenAndServe(*listenAddress, nil))
 }
 
-// Helper function to create notepad files if they don't exist
-func createNotepadFileIfNotExists(filename string, defaultContent string) {
-	filePath := filepath.Join("data", "notepad", filename)
+// Helper function to create files if they don't exist
+func createFileIfNotExists(filename string, defaultContent string) {
+	filePath := filepath.Join("data", filename)
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		err := os.WriteFile(filePath, []byte(defaultContent), 0644)
 		if err != nil {
-			log.Printf("Error creating notepad file %s: %v\n", filename, err)
+			log.Printf("Error creating file %s: %v\n", filename, err)
 		} else {
-			log.Printf("Created notepad file %s with default content\n", filename)
+			log.Printf("Created file %s with default content\n", filename)
 		}
 	}
 }
