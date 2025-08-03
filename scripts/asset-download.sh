@@ -45,6 +45,13 @@ echo "Downloading Catppuccin theme for Highlight.js..."
 curl -sL https://cdn.jsdelivr.net/npm/@catppuccin/highlightjs@0.1.1/css/catppuccin-latte.css -o static/css/catppuccin-latte.css
 curl -sL https://cdn.jsdelivr.net/npm/@catppuccin/highlightjs@0.1.1/css/catppuccin-mocha.css -o static/css/catppuccin-mocha.css
 
+# Remove background property from Catppuccin themes
+echo "Patching Catppuccin themes..."
+sed -i.bak 's/\(code\.hljs{color:[^;]*\);background:[^}]*\}/\1}/' static/css/catppuccin-latte.css
+sed -i.bak 's/\(code\.hljs{color:[^;]*\);background:[^}]*\}/\1}/' static/css/catppuccin-mocha.css
+rm static/css/catppuccin-latte.css.bak
+rm static/css/catppuccin-mocha.css.bak
+
 # Download Marked.js for markdown parsing
 echo "Downloading Marked.js..."
 curl -sL https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js -o static/js/marked.min.js
