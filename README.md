@@ -4,25 +4,26 @@
 
   <a href="https://github.com/tanq16/local-content-share/actions/workflows/binary-build.yml"><img alt="Build Workflow" src="https://github.com/tanq16/local-content-share/actions/workflows/binary-build.yml/badge.svg"></a>&nbsp;<a href="https://github.com/tanq16/local-content-share/actions/workflows/docker-publish.yml"><img alt="Container Workflow" src="https://github.com/tanq16/local-content-share/actions/workflows/docker-publish.yml/badge.svg"></a><br>
   <a href="https://github.com/Tanq16/local-content-share/releases"><img alt="GitHub Release" src="https://img.shields.io/github/v/release/tanq16/local-content-share"></a>&nbsp;<a href="https://hub.docker.com/r/tanq16/local-content-share"><img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/tanq16/local-content-share"></a><br><br>
-  <a href="#screenshots">Screenshots</a> &bull; <a href="#installation-and-usage">Install & Use</a> &bull; <a href="#tips-and-notes">Tips & Notes</a> &bull; <a href="#acknowledgements">Acknowledgements</a>
+  <a href="#screenshots">Screenshots</a> &bull; <a href="#installation-and-usage">Install & Use</a> &bull; <a href="#tips-and-notes">Tips & Notes</a>
 </div>
 
 ---
 
-A simple & elegant self-hosted app for **storing/sharing text snippets and files** in your **local network** with **no setup on client devices**. Think of this as an *all-in-one alternative* to **airdrop**, **local-pastebin**, and a **scratchpad**. The primary features are:
+A simple & elegant self-hosted app for **storing/sharing text snippets, files, and links** in your **local network** with **no setup on client devices**. Think of this as an *all-in-one alternative* to **airdrop**, **local-pastebin**, and a **scratchpad**. The primary features are:
 
 - Make plain text **snippets** available to **view/share** on any device in the local network
 - **Upload files** and make them available to **view/download** on any device in the local network
-- Built-in **Notepad** with both **Markdown** and **Rich Text** editing capabilities
+- **Store links** to **share** in last in, first show order in its own section
+- Built-in **Notepad** with **Markdown** editing and preview capabilities
 - **Rename** text snippets and files uploaded to easily find them in the UI
 - **Edit** text snippets to modify their content as needed
-- **Multi-file** **drag-n-drop** (drop into the text area) support for uploading files
+- **Multi-file** **drag-n-drop** support for uploading files
 - Configurable **expiration (or TTL, i.e., time to live)** per file/snippet for Never, 1 hour, 4 hours, 1 day, or Custom
 - Use of **SSE** to automatically inform all clients of new/deleted/edited files
 - Completely **local assets**, so the app works in your network even without internet
 - **Multi-arch** (x86-64 and ARM64) **Docker image** for **homelab** deployments
-- Frontend available over **browsers** and as a **PWA** (progressive web apps)
-- Clean, modern interface with **automatic light/dark** UI that looks good on mobile too
+- Frontend accessible via **browsers** and as a **PWA** (progressive web apps)
+- Clean, modern interface with **automatic light/dark** Catppuccin themed UI that looks good on mobile too
 
 Make sure to look into [Tips & Notes](#tips-and-notes) if you have questions about individual functionalities.
 
@@ -35,22 +36,6 @@ Make sure to look into [Tips & Notes](#tips-and-notes) if you have questions abo
 | --- | --- | --- |
 | Light | <img src="assets/dlight.png" alt="Light"> | <img src="assets/mlight.png" alt="Light"> |
 | Dark | <img src="assets/ddark.png" alt="Dark"> | <img src="assets/mdark.png" alt="Dark"> |
-
-<details>
-<summary>Expand for more screenshots</summary>
-
-| Desktop View | Mobile View |
-| --- | --- |
-| <img src="assets/dmdlight.png"> | <img src="assets/mmdlight.png"> |
-| <img src="assets/dmddark.png"> | <img src="assets/mmddark.png"> |
-| <img src="assets/dmdrlight.png"> | <img src="assets/mmdrlight.png"> |
-| <img src="assets/dmdrdark.png"> | <img src="assets/mmdrdark.png"> |
-| <img src="assets/drtextlight.png"> | <img src="assets/mrtextlight.png"> |
-| <img src="assets/drtextdark.png"> | <img src="assets/mrtextdark.png"> |
-| <img src="assets/dsnippetlight.png"> | <img src="assets/msnippetlight.png"> |
-| <img src="assets/dsnippetdark.png"> | <img src="assets/msnippetdark.png"> |
-
-</details>
 
 ## Installation and Usage
 
@@ -138,7 +123,7 @@ go build .
       - This value will be set as default on the home page instead of `Never`
       - The other options will still be available by cycling if needed
 - The Notepad is for writing something quickly and getting back to it from any device
-   - It supports both markdown and richtext modes
+   - It supports both markdown edit and preview modes
    - Content is automatically saved upon inactivity in the backend and will load as is on any device
 
 ### A Note on Reverse Proxies
@@ -161,11 +146,4 @@ This configuration will set the maximum accept size for file transfer through NP
 
 ### Backend Data Structure
 
-The application creates a `data` directory to store all uploaded files, uploaded text snippets, notepad notes (in `files`, `text`, and `notepad` subfolders respectively). File expirations are saved in an `expiration.json` file in the data directory. Make sure the application has write permissions for the directory where it runs.
-
-## Acknowledgements
-
-The following people have contributed to the project:
-
-- [TheArktect](https://github.com/TheArktect) - Added CLI argument for listen address.
-- A lot of other users who created feature requests via GitHub issues.
+The application creates a `data` directory to store all uploaded files, text snippets, notepad notes, and links (in `files/`, `text/`, `md.file`, and `links.file` respectively). File expirations are saved in an `expiration.json` file in the data directory. Make sure the application has write permissions for the directory where it runs.

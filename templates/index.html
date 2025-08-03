@@ -340,15 +340,15 @@
         });
 
         // Expiry cycle logic
-        // TODO: get list from backend
-        let expiryOptions = ["Never", "1 hour", "4 hours", "1 day", "Custom"];
+        let expiryOptions = []; // populated from backend
         const expiryButton = document.getElementById('expiry-button');
         const expiryText = document.getElementById('expiry-text');
         const expiryValueInput = document.getElementById('expiryValue');
         expiryButton.addEventListener('click', () => {
+            if (expiryOptions.length === 0) return;
             const currentText = expiryText.innerText;
             const currentIndex = expiryOptions.indexOf(currentText);
-            const nextIndex = (currentIndex + 1) % expiryOptions.length;
+            const nextIndex = (currentIndex === -1) ? 0 : (currentIndex + 1) % expiryOptions.length;
             const newValue = expiryOptions[nextIndex];
             if (newValue === "Custom") {
                 const customValue = prompt("Enter a custom expiration time (e.g., 1h, 30m, 2d, 1w, 1M, 1y):");
@@ -362,7 +362,7 @@
             }
         });
 
-        // Fetch expiry options from backend on load
+        // Fetch expiry options and reverse link order on load
         document.addEventListener('DOMContentLoaded', function() {
             fetch('/getExpiryOptions').then(response => response.json()).then(options => {
                 if (options && options.length > 0) {
@@ -371,6 +371,13 @@
                     expiryValueInput.value = expiryOptions[0];
                 }
             }).catch(error => console.error('Error fetching expiry options:', error));
+            // Reverse the order so newest are on top
+            const linksList = document.getElementById('links-list');
+            if (linksList) {
+                const links = Array.from(linksList.children);
+                links.reverse();
+                links.forEach(link => linksList.appendChild(link));
+            }
         });
 
         // Rename Modal Logic
@@ -523,7 +530,10 @@
             const evtSource = new EventSource("/api/updates");
             evtSource.onmessage = function(event) {
                 if (event.data === "content_updated") {
-                    setTimeout(() => { window.location.reload(); }, 100);
+                    const isModalOpen = document.querySelector('#new-item-modal:not(.hidden), #new-link-modal:not(.hidden), #rename-modal:not(.hidden), #view-snippet-modal:not(.hidden), #confirmation-modal:not(.hidden)');
+                    if (!isModalOpen) {
+                        setTimeout(() => { window.location.reload(); }, 100);
+                    }
                 }
             };
             evtSource.onerror = function() {
