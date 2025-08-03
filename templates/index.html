@@ -185,7 +185,7 @@
                     <label for="file-upload" class="flex flex-col items-center justify-center w-full h-32 border-2 border-surface0 border-dashed rounded-2xl cursor-pointer bg-base hover:bg-surface0 transition-all">
                         <div class="flex flex-col items-center justify-center pt-5 pb-6">
                             <i class="fas fa-cloud-upload-alt text-3xl text-overlay2 mb-2"></i>
-                            <p class="text-sm text-overlay2"><span class="font-semibold">Click to upload</span> or drag and drop</p>
+                            <p class="text-sm text-overlay2"><span class="font-semibold">Click to upload</span>, drag & drop, or paste</p>
                             <p id="file-name-display" class="text-xs text-blue mt-2 font-medium"></p>
                         </div>
                         <input id="file-upload" name="file-upload" type="file" class="hidden" multiple />
@@ -281,15 +281,29 @@
                     });
             });
         }
-        
+
+        const newItemModal = document.getElementById('new-item-modal');
+        // Reset the New Item modal
+        function closeAndResetNewItemModal() {
+            const form = document.getElementById('new-item-form');
+            const fileInput = document.getElementById('file-upload');
+            const fileNameDisplay = document.getElementById('file-name-display');
+            newItemModal.classList.add('hidden');
+            form.action = '/submit';
+            form.reset();
+            form.querySelector('[name="name"]').disabled = false;
+            fileInput.parentElement.parentElement.style.display = 'block';
+            fileInput.value = null;
+            fileNameDisplay.textContent = '';
+        }
+
         // Modal handling for New Item
         const newButton = document.getElementById('new-button');
         const cancelButton = document.getElementById('cancel-button');
-        const newItemModal = document.getElementById('new-item-modal');
         const modalBackdrop = document.getElementById('modal-backdrop');
         newButton.addEventListener('click', () => newItemModal.classList.remove('hidden'));
-        cancelButton.addEventListener('click', () => newItemModal.classList.add('hidden'));
-        modalBackdrop.addEventListener('click', () => newItemModal.classList.add('hidden'));
+        cancelButton.addEventListener('click', closeAndResetNewItemModal);
+        modalBackdrop.addEventListener('click', closeAndResetNewItemModal);
 
         // Modal handling for New Link
         const newLinkButton = document.getElementById('new-link-button');
@@ -337,6 +351,26 @@
         });
         fileInput.addEventListener('change', () => {
             updateFileDisplay(fileInput.files);
+        });
+
+        // Paste image from clipboard
+        newItemModal.addEventListener('paste', (e) => {
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            let files = [];
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') !== -1) {
+                    const blob = items[i].getAsFile();
+                    const file = new File([blob], `pasted-image-${Date.now()}.png`, { type: blob.type });
+                    files.push(file);
+                }
+            }
+            if (files.length > 0) {
+                e.preventDefault();
+                const dataTransfer = new DataTransfer();
+                files.forEach(file => dataTransfer.items.add(file));
+                fileInput.files = dataTransfer.files;
+                updateFileDisplay(fileInput.files);
+            }
         });
 
         // Expiry cycle logic
@@ -415,14 +449,6 @@
             form.querySelector('[name="content"]').value = content;
             form.querySelector('[name="file-upload"]').parentElement.parentElement.style.display = 'none';
             newItemModal.classList.remove('hidden');
-            const onCancel = () => {
-                form.action = '/submit';
-                form.reset();
-                form.querySelector('[name="name"]').disabled = false;
-                form.querySelector('[name="file-upload"]').parentElement.parentElement.style.display = 'block';
-                cancelButton.removeEventListener('click', onCancel);
-            };
-            cancelButton.addEventListener('click', onCancel, { once: true });
         }
 
         // Copy to clipboard function

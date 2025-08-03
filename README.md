@@ -106,6 +106,7 @@ go build .
 - To share files:
    - Click the upload button and select your file
    - OR drag and drop your file (even multiple files) to the text area
+   - OR click into the text area and paste a file or screenshot from clipboard
    - It will automatically append 4 random digits if filename isn't unique
 - To view content, click the eye icon:
    - For text content, it shows the raw text, which can be copied with a button on top
