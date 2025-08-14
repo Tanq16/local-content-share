@@ -74,6 +74,30 @@ Download the appropriate binary for your system from the [latest release](https:
 
 Make the binary executable (for Linux/macOS) with `chmod +x local-content-share-*` and then run the binary with `./local-content-share-*`. The application will be available at `http://localhost:8080`.
 
+### Using Nix
+
+The package is available as a flake :
+
+```bash
+nix run github:Tanq16/local-content-share
+```
+
+You can also add it to your system/home-manager configuration :
+
+```
+# flake.nix
+inputs.local-content-share = {
+    url = "github:Tanq16/local-content-share";
+    inputs.nixpkgs.follows = "nixpkgs";
+};
+```
+```
+# configuration.nix
+environment.systemPackages = [ 
+    inputs.local-content-share.packages.x86_64-linux.local-content-share 
+];
+```
+
 ### Local development
 
 With `Go 1.23+` installed, run the following to download the binary to your GOBIN:
