@@ -74,6 +74,37 @@ Download the appropriate binary for your system from the [latest release](https:
 
 Make the binary executable (for Linux/macOS) with `chmod +x local-content-share-*` and then run the binary with `./local-content-share-*`. The application will be available at `http://localhost:8080`.
 
+### Using Nix flakes
+
+#### Run without installing
+```sh
+nix run nixpkgs#local-content-share
+```
+
+#### Install
+```sh
+nix profile install nixpkgs#local-content-share
+```
+
+### Using the NixOS Module
+
+There is a Nixos module for the app, you need to be on the unstable branch.
+
+```nix
+  services.local-content-share.enable = true;
+```
+
+The NixOS module provides the following options:
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `enable` | false | Whether the service should be enabled or not |
+| `port` | 8080 | The port that local-content-share will be available at |
+| `listenAddress` | _empty string_ | Which address to listen on, all if not set |
+| `openFirewall` | false | Whether to open the specified port in the firewall |
+| `package` | _nixpkgs's_ | The package used by nixos for the service |
+
+
 ### Local development
 
 With `Go 1.23+` installed, run the following to download the binary to your GOBIN:
