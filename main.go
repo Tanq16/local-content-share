@@ -341,7 +341,7 @@ func main() {
 					continue
 				}
 				entries = append(entries, Entry{
-					ID:       "link/" + url.QueryEscape(line),
+					ID:       "link/" + url.PathEscape(line),
 					Type:     "link",
 					Content:  line,
 					Filename: line,
@@ -715,12 +715,8 @@ func main() {
 		}
 		id := strings.TrimPrefix(r.URL.Path, "/delete/")
 		// Handle link deletion
-		if strings.HasPrefix(id, "link/") {
-			linkToDelete, err := url.QueryUnescape(strings.TrimPrefix(id, "link/"))
-			if err != nil {
-				http.Error(w, "Invalid link format for deletion", http.StatusBadRequest)
-				return
-			}
+		if after, ok := strings.CutPrefix(id, "link/"); ok {
+			linkToDelete := after
 			linksFilePath := filepath.Join("data", "links.file")
 			data, err := os.ReadFile(linksFilePath)
 			if err != nil {
