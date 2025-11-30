@@ -125,7 +125,7 @@
                 <div id="snippets-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {{range .}}{{if eq .Type "text"}}
                     <div class="flex items-center justify-between bg-base border border-transparent hover:border-surface1 rounded-3xl px-4 py-2 transition-colors duration-300 relative cursor-pointer" onclick="showViewModal('{{.ID}}', '{{.Filename}}')">
-                        <div class="font-medium text-base truncate text-text mr-2">{{.Filename}}</div>
+                        <div class="font-medium truncate text-text mr-2">{{.Filename}}</div>
                         <div class="flex items-center gap-0 sm:gap-1 flex-shrink-0">
                             <button onclick="event.stopPropagation(); showRenameModal('{{.ID}}', '{{.Filename}}')" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Rename"><i class="fas fa-i-cursor"></i></button>
                             <button onclick="event.stopPropagation(); showEditForm('{{.ID}}', '{{.Filename}}')" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Edit"><i class="fas fa-pen"></i></button>
@@ -143,7 +143,7 @@
                 <div id="files-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {{range .}}{{if eq .Type "file"}}
                     <div class="flex items-center justify-between bg-base border border-transparent hover:border-surface1 rounded-3xl px-4 py-2 transition-colors duration-300">
-                        <div class="font-medium text-base truncate text-text mr-2">{{.Filename}}</div>
+                        <div class="font-medium truncate text-text mr-2">{{.Filename}}</div>
                         <div class="flex items-center gap-0 sm:gap-1 flex-shrink-0">
                             <button onclick="event.stopPropagation(); showRenameModal('{{.ID}}', '{{.Filename}}')" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Rename"><i class="fas fa-i-cursor"></i></button>
                             <a href="/download/{{.ID}}" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors no-underline" title="Download"><i class="fas fa-download"></i></a>
@@ -162,7 +162,7 @@
                     {{range .}}{{if eq .Type "link"}}
                     <a href="{{.Content}}" target="_blank" rel="noopener noreferrer" class="block bg-base border border-transparent hover:border-surface1 rounded-3xl px-4 py-2 transition-colors duration-300 no-underline group">
                         <div class="flex items-center justify-between">
-                            <div class="font-medium text-base truncate text-text mr-2">{{.Content}}</div>
+                            <div class="font-medium truncate text-text mr-2">{{.Content}}</div>
                             <div class="flex items-center gap-0 sm:gap-1 flex-shrink-0">
                                 <button onclick="event.preventDefault(); event.stopPropagation(); copyToClipboard('{{.Content}}', this)" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Copy"><i class="fas fa-copy"></i></button>
                                 <button onclick="event.preventDefault(); event.stopPropagation(); deleteItem('{{.ID}}')" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Delete"><i class="fas fa-trash"></i></button>
