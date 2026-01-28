@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/logo.png" alt="Local Content Share Logo" width="200">
+  <img src="assets/logo.svg" alt="Local Content Share Logo" width="200">
   <h1>Local Content Share</h1>
 
   <a href="https://github.com/tanq16/local-content-share/actions/workflows/binary-build.yml"><img alt="Build Workflow" src="https://github.com/tanq16/local-content-share/actions/workflows/binary-build.yml/badge.svg"></a>&nbsp;<a href="https://github.com/tanq16/local-content-share/actions/workflows/docker-publish.yml"><img alt="Container Workflow" src="https://github.com/tanq16/local-content-share/actions/workflows/docker-publish.yml/badge.svg"></a><br>
