@@ -168,6 +168,49 @@ func (t *ExpirationTracker) CleanupExpired() []string {
 }
 
 var listenAddress = flag.String("listen", ":8080", "host:port in which the server will listen")
+var apiKey = flag.String("api-key", "", "API key for authentication (env: LCS_API_KEY). When set, all requests must include ?key= or Authorization: Bearer <key>")
+
+// safeJoin joins path elements under the data directory and validates
+// the result is still within data/, preventing path traversal attacks.
+func safeJoin(elem ...string) (string, error) {
+	parts := append([]string{"data"}, elem...)
+	joined := filepath.Join(parts...)
+	abs, err := filepath.Abs(joined)
+	if err != nil {
+		return "", err
+	}
+	dataAbs, err := filepath.Abs("data")
+	if err != nil {
+		return "", err
+	}
+	if !strings.HasPrefix(abs, dataAbs+string(filepath.Separator)) && abs != dataAbs {
+		return "", fmt.Errorf("path traversal detected: %s", joined)
+	}
+	return joined, nil
+}
+
+// authMiddleware checks for a valid API key when one is configured.
+func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if *apiKey == "" {
+			next(w, r)
+			return
+		}
+		provided := r.URL.Query().Get("key")
+		if provided == "" {
+			authHeader := r.Header.Get("Authorization")
+			if after, ok := strings.CutPrefix(authHeader, "Bearer "); ok {
+				provided = after
+			}
+		}
+		if provided != *apiKey {
+			w.Header().Set("WWW-Authenticate", "Bearer")
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		next(w, r)
+	}
+}
 
 // Placeholder content for notepad files
 const mdPlaceholder = `# Welcome to Markdown Notepad
@@ -258,6 +301,16 @@ func notifyContentChange() {
 func main() {
 	flag.Parse()
 
+	// Check for API key in environment variable
+	if *apiKey == "" {
+		*apiKey = os.Getenv("LCS_API_KEY")
+	}
+	if *apiKey != "" {
+		log.Println("API key authentication enabled")
+	} else {
+		log.Println("WARNING: No API key configured — server running in open mode. Set -api-key flag or LCS_API_KEY env var.")
+	}
+
 	if err := os.MkdirAll(filepath.Join("data", "files"), 0755); err != nil {
 		log.Fatal(err)
 	}
@@ -298,7 +351,7 @@ func main() {
 
 	tmpl := template.Must(template.ParseFS(content, "templates/*.html"))
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/", authMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		// Clean up expired files on page load
 		expirationTracker.CleanupExpired()
 		entries := []Entry{}
@@ -349,17 +402,17 @@ func main() {
 			}
 		}
 		tmpl.ExecuteTemplate(w, "index.html", entries)
-	})
+	}))
 
-	http.HandleFunc("/md", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/md", authMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		tmpl.ExecuteTemplate(w, "md.html", nil)
-	})
+	}))
 
 	// Retrieve custom expiration options
-	http.HandleFunc("/getExpiryOptions", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/getExpiryOptions", authMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(expirationOptions)
-	})
+	}))
 
 	// Serve static files from embedded filesystem
 	staticFS, err := fs.Sub(content, "static")
@@ -447,7 +500,7 @@ func main() {
 	})
 
 	// API endpoint to load notepad content
-	http.HandleFunc("/notepad/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/notepad/", authMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "GET":
 			filename := strings.TrimPrefix(r.URL.Path, "/notepad/")
@@ -455,7 +508,12 @@ func main() {
 				http.Error(w, "Invalid notepad file", http.StatusBadRequest)
 				return
 			}
-			content, err := os.ReadFile(filepath.Join("data", "notepad", filename))
+			safePath, err := safeJoin("notepad", filename)
+			if err != nil {
+				http.Error(w, "Invalid path", http.StatusBadRequest)
+				return
+			}
+			content, err := os.ReadFile(safePath)
 			if err != nil {
 				http.Error(w, "Error reading notepad file", http.StatusInternalServerError)
 				return
@@ -475,7 +533,12 @@ func main() {
 				http.Error(w, "Error reading request body", http.StatusInternalServerError)
 				return
 			}
-			err = os.WriteFile(filepath.Join("data", "notepad", filename), content, 0644)
+			safePath, err := safeJoin("notepad", filename)
+			if err != nil {
+				http.Error(w, "Invalid path", http.StatusBadRequest)
+				return
+			}
+			err = os.WriteFile(safePath, content, 0644)
 			if err != nil {
 				http.Error(w, "Error saving notepad file", http.StatusInternalServerError)
 				return
@@ -486,9 +549,9 @@ func main() {
 			return
 		}
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-	})
+	}))
 
-	http.HandleFunc("/submit", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/submit", authMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
@@ -541,7 +604,11 @@ func main() {
 							fileName = fileHeader.Filename
 						}
 						uniqueFileName := generateUniqueFilename("data/files", fileName)
-						f, err := os.Create(filepath.Join("data/files", uniqueFileName))
+						safePath, err := safeJoin("files", uniqueFileName)
+						if err != nil {
+							return err
+						}
+						f, err := os.Create(safePath)
 						if err != nil {
 							return err
 						}
@@ -568,7 +635,12 @@ func main() {
 					filename = time.Now().Format("Jan-02 15-04-05")
 				}
 				uniqueFileName := generateUniqueFilename("data/text", filename)
-				err := os.WriteFile(filepath.Join("data/text", uniqueFileName), []byte(content), 0644)
+				safePath, err := safeJoin("text", uniqueFileName)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+				err = os.WriteFile(safePath, []byte(content), 0644)
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
@@ -588,9 +660,9 @@ func main() {
 			return
 		}
 		http.Redirect(w, r, "/", http.StatusSeeOther)
-	})
+	}))
 
-	http.HandleFunc("/rename/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/rename/", authMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
@@ -601,12 +673,31 @@ func main() {
 			http.Error(w, "New name cannot be empty", http.StatusBadRequest)
 			return
 		}
-		baseDir := filepath.Dir(filepath.Join("data", oldPath))
+		oldFullPath, err := safeJoin(oldPath)
+		if err != nil {
+			http.Error(w, "Invalid path", http.StatusBadRequest)
+			return
+		}
+		baseDir := filepath.Dir(oldFullPath)
 		newName = generateUniqueFilename(baseDir, newName)
 
 		// Get the new full path
 		newPath := filepath.Join(baseDir, newName)
-		oldFullPath := filepath.Join("data", oldPath)
+		// Validate newPath is still within data/
+		newPathAbs, err := filepath.Abs(newPath)
+		if err != nil {
+			http.Error(w, "Invalid path", http.StatusInternalServerError)
+			return
+		}
+		dataAbs, err := filepath.Abs("data")
+		if err != nil {
+			http.Error(w, "Invalid path", http.StatusInternalServerError)
+			return
+		}
+		if !strings.HasPrefix(newPathAbs, dataAbs+string(filepath.Separator)) && newPathAbs != dataAbs {
+			http.Error(w, "Invalid path", http.StatusBadRequest)
+			return
+		}
 		// Check if there's an expiration for this file
 		expirationTracker.mu.Lock()
 		expiryTime, hasExpiry := expirationTracker.Expirations[oldPath]
@@ -620,7 +711,7 @@ func main() {
 		}
 		expirationTracker.mu.Unlock()
 		// Rename the file
-		err := os.Rename(oldFullPath, newPath)
+		err = os.Rename(oldFullPath, newPath)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -628,15 +719,20 @@ func main() {
 		notifyContentChange()
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		log.Printf("Renamed %s to %s\n", oldPath, newName)
-	})
+	}))
 
-	http.HandleFunc("/raw/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/raw/", authMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		id := strings.TrimPrefix(r.URL.Path, "/raw/")
 		if !strings.HasPrefix(id, "text/") {
 			http.Error(w, "Only text files can be accessed", http.StatusBadRequest)
 			return
 		}
-		content, err := os.ReadFile(filepath.Join("data", id))
+		safePath, err := safeJoin(id)
+		if err != nil {
+			http.Error(w, "Invalid path", http.StatusBadRequest)
+			return
+		}
+		content, err := os.ReadFile(safePath)
 		if err != nil {
 			http.Error(w, "File not found", 404)
 			return
@@ -644,11 +740,15 @@ func main() {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.Header().Set("Cache-Control", "no-store")
 		w.Write(content)
-	})
+	}))
 
-	http.HandleFunc("/download/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/download/", authMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		filename := strings.TrimPrefix(r.URL.Path, "/download/")
-		filePath := filepath.Join("data", filename)
+		filePath, err := safeJoin(filename)
+		if err != nil {
+			http.Error(w, "Invalid path", http.StatusBadRequest)
+			return
+		}
 		fileInfo, err := os.Stat(filePath)
 		if err != nil {
 			http.Error(w, "File not found", http.StatusNotFound)
@@ -700,15 +800,20 @@ func main() {
 			return
 		}
 		log.Printf("Served %s for download\n", filename)
-	})
+	}))
 
-	http.HandleFunc("/view/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/view/", authMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		filename := strings.TrimPrefix(r.URL.Path, "/view/")
-		http.ServeFile(w, r, filepath.Join("data", filename))
+		safePath, err := safeJoin(filename)
+		if err != nil {
+			http.Error(w, "Invalid path", http.StatusBadRequest)
+			return
+		}
+		http.ServeFile(w, r, safePath)
 		log.Printf("Served %s for viewing\n", filename)
-	})
+	}))
 
-	http.HandleFunc("/delete/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/delete/", authMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
@@ -753,7 +858,12 @@ func main() {
 			return
 		}
 		// Handle file and snippet deletion
-		err := os.Remove(filepath.Join("data", id))
+		safePath, err := safeJoin(id)
+		if err != nil {
+			http.Error(w, "Invalid path", http.StatusBadRequest)
+			return
+		}
+		err = os.Remove(safePath)
 		if err != nil {
 			log.Printf("Failed to delete %s: %v", id, err)
 			http.Error(w, "Failed to delete file", http.StatusInternalServerError)
@@ -768,9 +878,9 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status": "ok"}`))
 		log.Printf("Deleted %s\n", id)
-	})
+	}))
 
-	http.HandleFunc("/edit/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/edit/", authMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
@@ -785,7 +895,12 @@ func main() {
 			http.Error(w, "Content cannot be empty", http.StatusBadRequest)
 			return
 		}
-		err := os.WriteFile(filepath.Join("data", id), []byte(content), 0644)
+		safePath, err := safeJoin(id)
+		if err != nil {
+			http.Error(w, "Invalid path", http.StatusBadRequest)
+			return
+		}
+		err = os.WriteFile(safePath, []byte(content), 0644)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -793,10 +908,10 @@ func main() {
 		notifyContentChange()
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		log.Printf("Edited %s\n", id)
-	})
+	}))
 
 	// SSE Updates for content refresh
-	http.HandleFunc("/api/updates", handleContentUpdates)
+	http.HandleFunc("/api/updates", authMiddleware(handleContentUpdates))
 
 	// Start server
 	log.Fatal(http.ListenAndServe(*listenAddress, nil))
