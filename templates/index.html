@@ -121,11 +121,26 @@
 
             <!-- Snippets Section -->
             <section class="content-section">
-                <h2 class="text-2xl font-semibold mb-4 text-center text-text">Snippets</h2>
+                <div class="flex items-center justify-between gap-3 mb-4">
+                    <h2 class="text-2xl font-semibold text-text">Snippets</h2>
+                    <div class="flex gap-2">
+                        <select data-sort-select data-section="snippets-list" class="bg-base text-subtext0 text-sm rounded-xl px-2 py-1 border-none focus:outline-none cursor-pointer">
+                            <option value="name">Name</option>
+                            <option value="size">Size</option>
+                            <option value="date" selected>Date</option>
+                        </select>
+                        <button data-sort-order data-section="snippets-list" class="w-8 h-8 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors cursor-pointer" title="Toggle sort order">
+                            <i class="fas fa-arrow-up-z-a"></i>
+                        </button>
+                    </div>
+                </div>
                 <div id="snippets-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {{range .}}{{if eq .Type "text"}}
-                    <div class="flex items-center justify-between bg-base border border-transparent hover:border-surface1 rounded-3xl px-4 py-2 transition-colors duration-300 relative cursor-pointer" onclick="showViewModal('{{.ID}}', '{{.Filename}}')">
-                        <div class="font-medium truncate text-text mr-2">{{.Filename}}</div>
+                    <div class="flex items-center justify-between bg-base border border-transparent hover:border-surface1 rounded-3xl px-4 py-2 transition-colors duration-300 relative cursor-pointer" data-name="{{.Filename}}" data-size="{{.Size}}" data-date="{{.ModTime}}" onclick="showViewModal('{{.ID}}', '{{.Filename}}')">
+                        <div class="truncate mr-2">
+                            <div class="font-medium text-text">{{.Filename}}</div>
+                            <div class="text-xs text-overlay1 entry-meta" data-size="{{.Size}}" data-date="{{.ModTime}}" data-expiry="{{.Expiry}}"></div>
+                        </div>
                         <div class="flex items-center gap-0 sm:gap-1 flex-shrink-0">
                             <button onclick="event.stopPropagation(); showRenameModal('{{.ID}}', '{{.Filename}}')" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Rename"><i class="fas fa-i-cursor"></i></button>
                             <button onclick="event.stopPropagation(); showEditForm('{{.ID}}', '{{.Filename}}')" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Edit"><i class="fas fa-pen"></i></button>
@@ -139,11 +154,26 @@
 
             <!-- Files Section -->
             <section class="content-section">
-                <h2 class="text-2xl font-semibold mb-4 text-center text-text">Files</h2>
+                <div class="flex items-center justify-between gap-3 mb-4">
+                    <h2 class="text-2xl font-semibold text-text">Files</h2>
+                    <div class="flex gap-2">
+                        <select data-sort-select data-section="files-list" class="bg-base text-subtext0 text-sm rounded-xl px-2 py-1 border-none focus:outline-none cursor-pointer">
+                            <option value="name">Name</option>
+                            <option value="size">Size</option>
+                            <option value="date" selected>Date</option>
+                        </select>
+                        <button data-sort-order data-section="files-list" class="w-8 h-8 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors cursor-pointer" title="Toggle sort order">
+                            <i class="fas fa-arrow-up-z-a"></i>
+                        </button>
+                    </div>
+                </div>
                 <div id="files-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {{range .}}{{if eq .Type "file"}}
-                    <div class="flex items-center justify-between bg-base border border-transparent hover:border-surface1 rounded-3xl px-4 py-2 transition-colors duration-300">
-                        <div class="font-medium truncate text-text mr-2">{{.Filename}}</div>
+                    <div class="flex items-center justify-between bg-base border border-transparent hover:border-surface1 rounded-3xl px-4 py-2 transition-colors duration-300" data-name="{{.Filename}}" data-size="{{.Size}}" data-date="{{.ModTime}}">
+                        <div class="truncate mr-2">
+                            <div class="font-medium text-text">{{.Filename}}</div>
+                            <div class="text-xs text-overlay1 entry-meta" data-size="{{.Size}}" data-date="{{.ModTime}}" data-expiry="{{.Expiry}}"></div>
+                        </div>
                         <div class="flex items-center gap-0 sm:gap-1 flex-shrink-0">
                             <button onclick="event.stopPropagation(); showRenameModal('{{.ID}}', '{{.Filename}}')" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors" title="Rename"><i class="fas fa-i-cursor"></i></button>
                             <a href="/download/{{.ID}}" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors no-underline" title="Download"><i class="fas fa-download"></i></a>
@@ -157,10 +187,19 @@
 
             <!-- Links Section -->
             <section class="content-section">
-                <h2 class="text-2xl font-semibold mb-4 text-center text-text">Links</h2>
+                <div class="flex items-center justify-between gap-3 mb-4">
+                    <h2 class="text-2xl font-semibold text-text">Links</h2>
+                    <div class="flex gap-2">
+                        <select data-sort-select data-section="links-list" class="bg-base text-subtext0 text-sm rounded-xl px-2 py-1 border-none focus:outline-none cursor-pointer"> <option value="name">Name</option>
+                        </select>
+                        <button data-sort-order data-section="links-list" class="w-8 h-8 flex items-center justify-center bg-base hover:bg-surface0 text-subtext0 rounded-full transition-colors cursor-pointer" title="Toggle sort order">
+                            <i class="fas fa-arrow-up-z-a"></i>
+                        </button>
+                    </div>
+                </div>
                 <div id="links-list" class="flex flex-col gap-2">
                     {{range .}}{{if eq .Type "link"}}
-                    <a href="{{.Content}}" target="_blank" rel="noopener noreferrer" class="block bg-base border border-transparent hover:border-surface1 rounded-3xl px-4 py-2 transition-colors duration-300 no-underline group">
+                    <a href="{{.Content}}" target="_blank" rel="noopener noreferrer" class="block bg-base border border-transparent hover:border-surface1 rounded-3xl px-4 py-2 transition-colors duration-300 no-underline group" data-name="{{.Content}}">
                         <div class="flex items-center justify-between">
                             <div class="font-medium truncate text-text mr-2">{{.Content}}</div>
                             <div class="flex items-center gap-0 sm:gap-1 flex-shrink-0">
@@ -413,13 +452,20 @@
                     expiryValueInput.value = expiryOptions[0];
                 }
             }).catch(error => console.error('Error fetching expiry options:', error));
-            // Reverse the order so newest are on top
-            const linksList = document.getElementById('links-list');
-            if (linksList) {
-                const links = Array.from(linksList.children);
-                links.reverse();
-                links.forEach(link => linksList.appendChild(link));
-            }
+            // Populate entry metadata (size + date)
+            document.querySelectorAll('.entry-meta').forEach(el => {
+                const parts = [];
+                const size = parseInt(el.dataset.size || '0', 10);
+                const date = parseInt(el.dataset.date || '0', 10);
+                const expiry = parseInt(el.dataset.expiry || '0', 10);
+                if (size) parts.push(formatSize(size));
+                if (date) parts.push(formatDate(date));
+                if (expiry) parts.push(formatExpiry(expiry));
+                el.textContent = parts.join(' · ');
+            });
+            // Apply default sort to all sections
+            // TODO: We might want to store the sorting preferences in localStorage
+            ['snippets-list', 'files-list', 'links-list'].forEach(sortSection);
         });
 
         // Rename Modal Logic
@@ -597,6 +643,85 @@
                 progressContainer.classList.add('hidden');
             };
             xhr.send(formData);
+        });
+
+        // Format bytes to human-readable size
+        function formatSize(bytes) {
+            if (!bytes || bytes === 0) return '';
+            const units = ['B', 'KB', 'MB', 'GB'];
+            let i = 0;
+            let size = bytes;
+            while (size >= 1024 && i < units.length - 1) { size /= 1024; i++; }
+            return (i === 0 ? size : size.toFixed(1)) + ' ' + units[i];
+        }
+
+        // Format unix timestamp to relative date
+        function formatDate(timestamp) {
+            if (!timestamp || timestamp === 0) return '';
+            const now = Date.now() / 1000;
+            const diff = now - timestamp;
+            if (diff < 60) return 'just now';
+            if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+            if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+            if (diff < 2592000) return Math.floor(diff / 86400) + 'd ago';
+            return new Date(timestamp * 1000).toLocaleDateString();
+        }
+
+        // Format expiry timestamp to readable remaining time
+        function formatExpiry(timestamp) {
+            if (!timestamp || timestamp === 0) return '';
+            const now = Date.now() / 1000;
+            const diff = timestamp - now;
+            if (diff <= 0) return 'expired';
+            if (diff < 3600) return 'expires in ' + Math.ceil(diff / 60) + 'm';
+            if (diff < 86400) return 'expires in ' + Math.ceil(diff / 3600) + 'h';
+            return 'expires in ' + Math.ceil(diff / 86400) + 'd';
+        }
+
+        // Sort named sections by the selected filter and order.
+        // Assumes all sections have data-name attributes on their items for sorting by name.
+        function sortSection(sectionId) {
+            const container = document.getElementById(sectionId);
+            if (!container) return;
+            const select = document.querySelector(`[data-sort-select][data-section="${sectionId}"]`);
+            const orderBtn = document.querySelector(`[data-sort-order][data-section="${sectionId}"]`);
+
+            const items = Array.from(container.children);
+            const ascending = orderBtn.dataset.ascending !== 'false';
+            const sortBy = select.value;
+
+            items.sort((a, b) => {
+                let valA, valB;
+                if (sortBy === 'name') {
+                    valA = (a.dataset.name || '').toLowerCase();
+                    valB = (b.dataset.name || '').toLowerCase();
+                } else if (sortBy === 'size') {
+                    valA = parseInt(a.dataset.size || '0', 10);
+                    valB = parseInt(b.dataset.size || '0', 10);
+                } else if (sortBy === 'date') {
+                    valA = parseInt(a.dataset.date || '0', 10);
+                    valB = parseInt(b.dataset.date || '0', 10);
+                }
+                const cmp = valA < valB ? -1 : valA > valB ? 1 : 0;
+                return ascending ? cmp : -cmp;
+            });
+            items.forEach(item => container.appendChild(item));
+        }
+
+        document.querySelectorAll('[data-sort-select]').forEach(select => {
+            select.addEventListener('change', () => sortSection(select.dataset.section));
+        });
+
+        document.querySelectorAll('[data-sort-order]').forEach(btn => {
+            btn.dataset.ascending = 'false';
+            btn.querySelector('i').className = 'fas fa-arrow-up-z-a';
+            btn.addEventListener('click', () => {
+                const asc = btn.dataset.ascending !== 'false';
+                btn.dataset.ascending = !asc;
+                const icon = btn.querySelector('i');
+                icon.className = !asc ? 'fas fa-arrow-down-a-z' : 'fas fa-arrow-up-z-a';
+                sortSection(btn.dataset.section);
+            });
         });
 
         // SSE for live updates
